@@ -1,4 +1,4 @@
-package com.github.hhhzzzsss.songplayer.song;
+package com.github.hhhzzzsss.songplayer.utils;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;

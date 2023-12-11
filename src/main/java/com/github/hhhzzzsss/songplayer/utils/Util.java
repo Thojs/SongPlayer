@@ -1,5 +1,6 @@
-package com.github.hhhzzzsss.songplayer;
+package com.github.hhhzzzsss.songplayer.utils;
 
+import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
@@ -17,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,8 +28,7 @@ public class Util {
     public static void createDirectoriesSilently(Path path) {
         try {
             Files.createDirectories(path);
-        }
-        catch (IOException e) {}
+        } catch (IOException ignored) {}
     }
 
     public static Path resolveWithIOException(Path path, String other) throws IOException {
@@ -59,12 +58,12 @@ public class Util {
         }
 
         @Override
-        public int read(byte b[]) throws IOException {
+        public int read(byte[] b) throws IOException {
             return read(b, 0, b.length);
         }
 
         @Override
-        public int read(byte b[], int off, int len) throws IOException {
+        public int read(byte[] b, int off, int len) throws IOException {
             int i = original.read(b, off, len);
             if (i>=0) incrementCounter(i);
             return i;
@@ -147,7 +146,7 @@ public class Util {
         }
 
         ArrayList<String> suggestionsList = new ArrayList<>();
-        for (Path path : songFiles.collect(Collectors.toList())) {
+        for (Path path : songFiles.toList()) {
             if (Files.isRegularFile(path)) {
                 suggestionsList.add(dirString + path.getFileName().toString());
             }
