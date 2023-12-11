@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.item;
 
-import com.github.hhhzzzsss.songplayer.Util;
+import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.nbt.NbtElement;
@@ -28,10 +28,11 @@ public class SongItemUtils {
 
     public static void addSongItemDisplay(ItemStack stack) {
         if (!isSongItem(stack)) return;
+
         NbtCompound songPlayerNbt = getSongItemTag(stack);
         String name = songPlayerNbt.getString(DISPLAY_NAME_KEY);
-        if (name == null || name.length() == 0) name = songPlayerNbt.getString(FILE_NAME_KEY);
-        if (name == null || name.length() == 0) name = "unnamed";
+        if (name == null || name.isEmpty()) name = songPlayerNbt.getString(FILE_NAME_KEY);
+        if (name == null || name.isEmpty()) name = "unnamed";
         Text nameText = Util.getStyledText(name, Style.EMPTY.withColor(Formatting.DARK_AQUA).withItalic(false));
         Util.setItemName(stack, nameText);
         Util.setItemLore(stack,

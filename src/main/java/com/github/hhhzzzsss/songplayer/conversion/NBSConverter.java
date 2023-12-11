@@ -50,7 +50,7 @@ public class NBSConverter {
         ByteBuffer buffer = ByteBuffer.wrap(bytes);
         buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        short songLength = 0;
+        short songLength;
         byte format = 0;
         byte vanillaInstrumentCount = 0;
         songLength = buffer.getShort(); // If it's not 0, then it uses the old format
@@ -132,7 +132,7 @@ public class NBSConverter {
             }
         }
 
-        Song song = new Song(songName.trim().length() > 0 ? songName : fileName);
+        Song song = new Song(!songName.trim().isEmpty() ? songName : fileName);
         if (loop > 0) {
             song.looping = true;
             song.loopPosition = getMilliTime(loopStartTick, tempo);

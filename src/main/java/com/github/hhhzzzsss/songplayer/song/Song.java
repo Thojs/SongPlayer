@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.Collections;
 
 public class Song {
-	public ArrayList<Note> notes = new ArrayList<>();
 	public String name;
+	public ArrayList<Note> notes = new ArrayList<>();
 	public int position = 0; // Current note index
 	public boolean[] requiredNotes = new boolean[400];
-	public boolean looping = false;
 	public boolean paused = true;
 	public long startTime = 0; // Start time in millis since unix epoch
 	public long length = 0; // Milliseconds in the song
 	public long time = 0; // Time since start of song
+
+	public boolean looping = false;
 	public long loopPosition = 0; // Milliseconds into the song to start looping
 	public int loopCount = 0; // Number of times to loop
 	public int currentLoop = 0; // Number of loops so far
@@ -117,14 +118,12 @@ public class Song {
 	}
 
 	private boolean shouldLoop() {
-		if (looping) {
-			if (loopCount == 0) {
-				return true;
-			} else {
-				return currentLoop < loopCount;
-			}
+		if (!looping) return false;
+
+		if (loopCount == 0) {
+			return true;
 		} else {
-			return false;
+			return currentLoop < loopCount;
 		}
 	}
 

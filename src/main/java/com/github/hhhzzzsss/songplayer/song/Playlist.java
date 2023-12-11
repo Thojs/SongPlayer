@@ -1,7 +1,7 @@
 package com.github.hhhzzzsss.songplayer.song;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.Util;
+import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
@@ -40,7 +40,7 @@ public class Playlist {
         if (Files.isDirectory(directory)) {
             index = validateAndLoadIndex(directory);
             songFiles = index.stream()
-                    .map(name -> directory.resolve(name))
+                    .map(directory::resolve)
                     .collect(Collectors.toList());
             (new PlaylistLoaderThread()).start();
         } else {
@@ -54,7 +54,7 @@ public class Playlist {
         public void run() {
             for (Path file : songFiles) {
                 SongLoaderThread slt = new SongLoaderThread(file);
-                slt.run();
+                slt.start();
                 if (slt.exception != null) {
                     songsFailedToLoad.add(file.getFileName().toString());
                 } else {
@@ -184,8 +184,7 @@ public class Playlist {
     private static void saveIndexSilently(Path directory, List<String> index) {
         try {
             saveIndex(directory, index);
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

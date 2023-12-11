@@ -30,9 +30,8 @@ public class SongItemCreatorThread extends SongLoaderThread {
             return;
         }
         SongPlayer.MC.execute(() -> {
-            if (SongPlayer.MC.world == null) {
-                return;
-            }
+            if (SongPlayer.MC.world == null) return;
+
             if (!SongPlayer.MC.player.getInventory().getStack(slotId).equals(stack)) {
                 SongPlayer.addChatMessage("§cCould not create song item because item has moved");
             }
@@ -40,8 +39,7 @@ public class SongItemCreatorThread extends SongLoaderThread {
             if (stack.isEmpty()) {
                 newStack = Items.PAPER.getDefaultStack();
                 newStack.getOrCreateNbt().putInt("CustomModelData", 751642938);
-            }
-            else {
+            } else {
                 newStack = stack.copy();
             }
             newStack = SongItemUtils.createSongItem(newStack, songData, filename, song.name);

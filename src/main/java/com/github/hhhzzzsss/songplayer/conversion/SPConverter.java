@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.conversion;
 
-import com.github.hhhzzzsss.songplayer.Util;
+import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.github.hhhzzzsss.songplayer.song.Note;
 import com.github.hhhzzzsss.songplayer.song.Song;
 
@@ -41,7 +41,7 @@ public class SPConverter {
         int loopCount = buffer.get() & 0xFF;
         long loopPosition = buffer.getLong();
 
-        Song song = new Song(songName.trim().length() > 0 ? songName : fileName);
+        Song song = new Song(!songName.trim().isEmpty() ? songName : fileName);
         song.length = songLength;
         song.looping = loop > 0;
         song.loopCount = loopCount;

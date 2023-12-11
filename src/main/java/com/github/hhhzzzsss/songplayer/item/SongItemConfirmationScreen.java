@@ -6,7 +6,6 @@ import net.minecraft.client.font.MultilineText;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 
@@ -16,8 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class SongItemConfirmationScreen extends Screen {
-    private ItemStack stack;
-    private SongItemLoaderThread loaderThread;
+    private final SongItemLoaderThread loaderThread;
     private MultilineText unloadedText;
     private MultilineText loadedText;
     private boolean loaded = false;
@@ -27,7 +25,6 @@ public class SongItemConfirmationScreen extends Screen {
 
     public SongItemConfirmationScreen(ItemStack stack) throws IOException, IllegalArgumentException {
         super(Text.literal("Use song item"));
-        this.stack = stack;
         this.loaderThread = new SongItemLoaderThread(stack);
         this.loaderThread.start();
     }
@@ -64,7 +61,8 @@ public class SongItemConfirmationScreen extends Screen {
                 this.client.setScreen(null);
                 return;
             }
-            else if (loadedText == null) {
+
+            if (loadedText == null) {
                 String[] loadedMessages = {
                         "§3" + loaderThread.song.name,
                         String.format("§7Max notes per second: %s%d", getNumberColor(loaderThread.maxNotesPerSecond), loaderThread.maxNotesPerSecond),
@@ -82,8 +80,7 @@ public class SongItemConfirmationScreen extends Screen {
 
         if (loaded) {
             loadedText.drawCenterWithShadow(context, this.width / 2, 60);
-        }
-        else {
+        } else {
             unloadedText.drawCenterWithShadow(context, this.width / 2, 60);
         }
 
@@ -93,19 +90,14 @@ public class SongItemConfirmationScreen extends Screen {
     public String getNumberColor(double number) {
         if (number < 50) {
             return "§a";
-        }
-        else if (number < 100) {
+        } else if (number < 100) {
             return "§e";
-        }
-        else if (number < 300) {
+        } else if (number < 300) {
             return "§6";
-        }
-        else if (number < 600) {
+        } else if (number < 600) {
             return "§c";
-        }
-        else {
+        } else {
             return "§4";
         }
-
     }
 }

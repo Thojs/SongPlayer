@@ -28,10 +28,10 @@ public class SongItemLoaderThread extends SongLoaderThread {
     public void run() {
         try {
             song = SPConverter.getSongFromBytes(songData, filename);
-            if (displayName == null || displayName.length() > 0) {
+            if (displayName == null || !displayName.isEmpty()) {
                 song.name = displayName;
             }
-            if (song.name == null || song.name.length() == 0) {
+            if (song.name == null || song.name.isEmpty()) {
                 song.name = "unnamed";
             }
 
@@ -48,8 +48,7 @@ public class SongItemLoaderThread extends SongLoaderThread {
                 maxNotesPerSecond = Math.max(notesInSecond, maxNotesPerSecond);
             }
             avgNotesPerSecond = song.notes.size() * 1000.0 / song.length;
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             exception = e;
             e.printStackTrace();
         }
