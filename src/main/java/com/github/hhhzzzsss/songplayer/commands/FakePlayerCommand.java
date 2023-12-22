@@ -1,31 +1,33 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
+import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
-class SkipCommand extends Command {
+class FakePlayerCommand extends Command {
     @Override
     public String getName() {
-        return "skip";
+        return "fakePlayer";
     }
 
     @Override
     public String getDescription() {
-        return "Skips current song";
+        return "Shows a fake player representing your true position when playing songs";
     }
 
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            if (SongHandler.getInstance().currentSong == null) {
-                SongPlayer.addChatMessage("§6No song is currently playing");
-                return 1;
+            Config.getConfig().showFakePlayer ^= true;
+
+            if (Config.getConfig().showFakePlayer) {
+                SongPlayer.addChatMessage("§6Enabled fake player");
+            } else {
+                SongPlayer.addChatMessage("§6Disabled fake player");
             }
 
-            SongPlayer.addChatMessage("§6Skipped the current song.");
-            SongHandler.getInstance().currentSong = null;
+            Config.saveConfigWithErrorHandling();
 
             return 1;
         });

@@ -19,7 +19,7 @@ This mod also requires fabric api to function properly. Download it [here](https
 ## How to use
 
 ### Adding songs
-To add songs to SongPlayer you can place any of the supported formats inside the `.minecraft/songs` folder.
+To add songs to SongPlayer you can place any of the supported formats inside the `.minecraft/SongPlayer/songs` folder.
 
 You are able to organize songs easily by placing them into subdirectories. Tab completion will make it easy to navigate. Symlinked directories are supported too.
 
@@ -29,106 +29,110 @@ You are able to organize songs easily by placing them into subdirectories. Tab c
 - SP (SongPlayers format, used in item feature)
 
 ### Playing songs
-To play songs use the `$play <filename|url>` command.<br>
+To play songs use the `/sp play <filename|url>` command.<br>
 When executing the command the mod will try to set your gamemode to creative, place the required noteblocks for the song, try to switch you to survival, then start playing.
 
 
 ## Commands
+Users are able to control SongPlayer by using the brigadier `/songplayer` or `/sp` commands.
 
-#### $help (command)
-If no arguments are given, lists all SongPlayer commands.
-Otherwise, explains the specified command and shows its syntax.
+There are some sub-commands that will be discussed here:
 
-### $play \<filename or url>
-Plays a particular midi from the `.minecraft/songs` folder, or, if an url is specified, caches the song at that url and tries to play it.
+### play \<filename or url>
+Plays a particular midi from the `.minecraft/SongPlayer/songs` folder, or, if an url is specified, parses the song at that url and tries to play it.
 
 If there is a song already playing, the new song will be added to the queue.
 
-### $stop
+### stop
 Stops playing or building and clears the queue.
 
-### $skip
+### skip
 Skips the current song and goes to the next one.
 
-### $goto \<mm:ss>
+### goto \<mm:ss>
 Goes to a specific time in the current playing song.
 
-### $loop
+### loop
 Toggles the looping mode on the current song.
 
-### $status
-*aliases: `$current`*
+### status
 
 Gets the status of the current song that is playing.
 
-### $queue
-*aliases: `$showqueue`*
+### queue
 
 Shows all the songs in the queue.
 
-### $playlist play \<playlist>
-### $playlist create \<playlist>
-### $playlist list \[\<playlist>]
-### $playlist delete \<playlist> \<song>
-### $playlist addSong \<playlist> \<song>
-### $playlist removeSong \<playlist> \<song>
-### $playlist renameSong \<playlist> \<old name> \<new name>
-### $playlist loop
-### $playlist shuffle
 
-Create, edit, delete, or play playlists. You can also toggle looping or shuffling.
+[//]: # (Playlist function is not really important, I don't use it on a regular basis.)
 
-### $songs (subdirectory)
-*aliases: `$list`*
+[//]: # (### playlist play \<playlist>)
+
+[//]: # (### playlist create \<playlist>)
+
+[//]: # (### playlist list \[\<playlist>])
+
+[//]: # (### playlist delete \<playlist> \<song>)
+
+[//]: # (### playlist addSong \<playlist> \<song>)
+
+[//]: # (### playlist removeSong \<playlist> \<song>)
+
+[//]: # (### playlist renameSong \<playlist> \<old name> \<new name>)
+
+[//]: # (### playlist loop)
+
+[//]: # (### playlist shuffle)
+
+[//]: # ()
+[//]: # (Create, edit, delete, or play playlists. You can also toggle looping or shuffling.)
+
+### songs (subdirectory)
 
 If no arguments are given, lists songs in the `songs` folder. Otherwise, lists songs in the specified subdirectory.
 
-### $setCommands use \<vanilla|essentials>
+### setCommands use \<vanilla|essentials>
 Switch to using Essentials or vanilla gamemode commands.
 
-### $setCommands creative \<command>
+### setCommands creative \<command>
 Sets the command that will be used to switch to creative mode.
 
-### $setCommands survival \<command>
+### setCommands survival \<command>
 Sets the command that will be used to switch to survival mode.
 
-### $toggleFakePlayer
-*aliases: `$fakePlayer`, `$fp`*
+### toggleFakePlayer
 
 Toggles whether a fake player will show up to represent your true position while playing a song. When playing a song, since it automatically enables freecam, your true position will be different from your apparent position. The fake player will show where you actually are. By default, this is disabled.
 
-### $setStageType \<DEFAULT | WIDE | SPHERICAL>
-*aliases: `$setStage`, `$stageType`*
+### setStageType \<DEFAULT | WIDE | SPHERICAL>
 
 Sets the type of noteblock stage to build. Thanks Sk8kman and Lizard16 for the spherical stage design!
 - Default: A square shaped stage with a maximum of 300 noteblocks
 - Wide: A cylindrical stage with a maximum of 360 noteblocks
 - Spherical: A densely packed spherical stage that can contain all 400 possible noteblocks
 
-### $toggleMovement \<swing | rotate>
-*aliases: `$movement`*
+### toggleMovement \<swing | rotate>
 
 Toggles whether you swing your arm when hitting a noteblock and rotate to look at the noteblocks you are hitting.
 
-### $announcement \<enable | disable | getMessage>
-### $announcement setMessage
+### announcement \<enable | disable | getMessage>
+### announcement setMessage
 
 Set an announcement message that is sent when you start playing a song.
 With setMessage, write `[name]` where the song name should go.
 
 Example: `$announcement setMessage &6Now playing: &3[name]`
 
-### $songItem create \<song or url>
-### $songItem setSongName \<name>
-*aliases: `$item`*
+### songItem create \<song or url>
+### songItem setSongName \<name>
 
-Encodes song data into an item. When you right click on such an item, SongPlayer will automatically detect that it is a song item and ask if you want to play it. These items, once created, can be used by anyone that is using the necessary version of SongPlayer.
+Encodes song data into an item. When you right-click on such an item, SongPlayer will automatically detect that it is a song item and ask if you want to play it. These items, once created, can be used by anyone that is using the necessary version of SongPlayer.
 
 It will automatically generate custom item names and lore, but these can be modified or deleted without affecting the song data, so feel free to edit the items as you wish. SongPlayer only looks at the `SongItemData` tag.
 
-### $testSong
-A command I used for testing during development.
-It plays all 400 possible noteblock sounds in order.
+### testSong
+A command used for testing during development.
+It plays all 400 possible noteblock sounds in order (if possible).
 
 ## Acknowledgements
 **Ayunami2000**: Came up with the concept of directly placing noteblocks with nbt data instead of manually tuning them.

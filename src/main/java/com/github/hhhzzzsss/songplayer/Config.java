@@ -1,6 +1,5 @@
 package com.github.hhhzzzsss.songplayer;
 
-import com.github.hhhzzzsss.songplayer.playing.Stage;
 import com.google.gson.Gson;
 
 import java.io.BufferedReader;
@@ -12,16 +11,15 @@ import java.nio.file.Path;
 public class Config {
     private static Config config = null;
 
-    public static final Path CONFIG_FILE = SongPlayer.SONGPLAYER_DIR.resolve("config.json");
+    private static final Path CONFIG_FILE = SongPlayer.SONGPLAYER_DIR.resolve("config.json");
     private static final Gson gson = new Gson();
 
-    public String prefix = "$";
-    public String creativeCommand = "gmc";
-    public String survivalCommand = "gms";
+    public String creativeCommand = "gamemode creative";
+    public String survivalCommand = "gamemode survival";
     public boolean showFakePlayer = false;
     public boolean loopPlaylists = false;
     public boolean shufflePlaylists = false;
-    public Stage.StageType stageType = Stage.StageType.DEFAULT;
+    public String stageType = "default";
     public boolean swing = false;
     public boolean rotate = false;
     public boolean doAnnouncement = false;
@@ -33,15 +31,14 @@ public class Config {
             try {
                 if (Files.exists(CONFIG_FILE)) {
                     loadConfig();
-                }
-                else {
+                } else {
                     saveConfig();
                 }
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
         return config;
     }
 
@@ -60,8 +57,7 @@ public class Config {
     public static void saveConfigWithErrorHandling() {
         try {
             Config.saveConfig();
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             if (SongPlayer.MC.world != null) {
                 SongPlayer.addChatMessage("§cFailed to save config file");
             }

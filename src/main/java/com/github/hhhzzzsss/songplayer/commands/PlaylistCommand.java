@@ -2,12 +2,14 @@ package com.github.hhhzzzsss.songplayer.commands;
 
 import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.Util;
+import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.github.hhhzzzsss.songplayer.song.Playlist;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -15,28 +17,15 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 class PlaylistCommand extends Command {
+    @Override
     public String getName() {
         return "playlist";
     }
-    public String[] getSyntax() {
-        return new String[] {
-                "play <playlist>",
-                "create <playlist>",
-                "list [<playlist>]",
-                "delete <playlist> <song>",
-                "addSong <playlist> <song>",
-                "removeSong <playlist> <song>",
-                "renameSong <playlist> <index> <new name>",
-                "loop",
-                "shuffle",
-        };
-    }
+
+    @Override
     public String getDescription() {
         return "Configures playlists";
     }
@@ -119,15 +108,14 @@ class PlaylistCommand extends Command {
                 case "renamesong": {
                     if (split.length < 4) return false;
                     String location = String.join(" ", Arrays.copyOfRange(split, 3, split.length));
-                    int index = 0;
+                    int index;
                     try {
                         index = Integer.parseInt(split[2]);
-                    }
-                    catch (Exception e) {
+                    } catch (Exception e) {
                         SongPlayer.addChatMessage("§cIndex must be an integer");
                         return true;
                     }
-                    String oldName = Playlist.renameSong(playlistDir, index-1, location);
+                    String oldName = Playlist.renameSong(playlistDir, index - 1, location);
                     SongPlayer.addChatMessage(String.format("§6Renamed §3%s §6to §3%s", oldName, location));
                     return true;
                 }
@@ -159,74 +147,121 @@ class PlaylistCommand extends Command {
                     return false;
                 }
             }
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             SongPlayer.addChatMessage("§c" + e.getMessage());
             return true;
         }
     }
-    public CompletableFuture<Suggestions> getSuggestions(String args, SuggestionsBuilder suggestionsBuilder) {
-        String[] split = args.split(" ", -1);
-        if (split.length <= 1) {
-            return CommandSource.suggestMatching(new String[]{
-                    "play",
-                    "create",
-                    "delete",
-                    "list",
-                    "addSong",
-                    "removeSong",
-                    "renameSong",
-                    "loop",
-                    "shuffle",
-            }, suggestionsBuilder);
-        }
-        return switch (split[0].toLowerCase(Locale.ROOT)) {
-            default -> null;
-            case "play", "list", "delete" -> {
-                if (split.length == 2) {
-                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
-                }
-                yield null;
-            }
-            case "addsong" -> {
-                if (split.length == 2) {
-                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
-                } else {
-                    String location = String.join(" ", Arrays.copyOfRange(split, 2, split.length));
-                    yield Util.giveSongSuggestions(location, suggestionsBuilder);
-                }
-            }
-            case "removesong" -> {
-                if (split.length == 2) {
-                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
-                } else if (split.length == 3) {
-                    Path playlistDir = SongPlayer.PLAYLISTS_DIR.resolve(split[1]);
-                    Stream<Path> playlistFiles = Playlist.getSongFiles(playlistDir);
-                    if (playlistFiles == null) {
-                        yield null;
+
+    @Override
+    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        //TODO
+        node.then(ClientCommandManager.literal("play")
+            .then(ClientCommandManager.argument("playlist", StringArgumentType.word())
+                .suggests((context, builder) -> SuggestionUtil.givePlaylistSuggestions(builder))
+                .executes(context -> {
+                    Path playlistDir = getPlayListPath(context);
+
+                    if (!Files.exists(playlistDir)) {
+                        SongPlayer.addChatMessage("§cPlaylist does not exist");
+                        return 1;
                     }
-                    yield CommandSource.suggestMatching(
-                            playlistFiles.map(Path::getFileName)
-                                    .map(Path::toString),
-                            suggestionsBuilder);
-                }
-                yield null;
-            }
-            case "renamesong" -> {
-                if (split.length == 2) {
-                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
-                } else if (split.length == 3) {
-                    Path playlistDir = SongPlayer.PLAYLISTS_DIR.resolve(split[1]);
-                    Stream<Path> playlistFiles = Playlist.getSongFiles(playlistDir);
-                    if (playlistFiles == null) {
-                        yield null;
-                    }
-                    int max = playlistFiles.toList().size();
-                    Stream<String> suggestions = IntStream.range(1, max + 1).mapToObj(Integer::toString);
-                    yield CommandSource.suggestMatching(suggestions, suggestionsBuilder);
-                }
-                yield null;
-            }
-        };
+                    SongHandler.getInstance().setPlaylist(playlistDir);
+
+                    return 1;
+                })
+            )
+        );
+        node.then(ClientCommandManager.literal("delete")
+            .then(ClientCommandManager.argument("playlist", StringArgumentType.word())
+                .suggests((context, builder) -> SuggestionUtil.givePlaylistSuggestions(builder))
+                .executes(context -> {
+                    Path playlistDir = getPlayListPath(context);
+//                    Playlist.deletePlaylist(playlistDir);
+//                    SongPlayer.addChatMessage(String.format("§6Deleted playlist §3%s", split[1]));
+                    return 1;
+                })
+            )
+        );
+        node.then(ClientCommandManager.literal("list")
+            .then(ClientCommandManager.argument("playlist", StringArgumentType.word())
+                .suggests((context, builder) -> SuggestionUtil.givePlaylistSuggestions(builder))
+            )
+        );
+        node.then(ClientCommandManager.literal("create"));
+        node.then(ClientCommandManager.literal("addsong"));
+        node.then(ClientCommandManager.literal("removesong"));
+        node.then(ClientCommandManager.literal("renameSong"));
+        node.then(ClientCommandManager.literal("loop"));
+        node.then(ClientCommandManager.literal("shuffle"));
+    }
+
+//    public CompletableFuture<Suggestions> getSuggestions(String args, SuggestionsBuilder suggestionsBuilder) {
+//        String[] split = args.split(" ", -1);
+//        if (split.length <= 1) {
+//            return CommandSource.suggestMatching(new String[]{
+//                    "play",
+//                    "create",
+//                    "delete",
+//                    "list",
+//                    "addSong",
+//                    "removeSong",
+//                    "renameSong",
+//                    "loop",
+//                    "shuffle",
+//            }, suggestionsBuilder);
+//        }
+//        return switch (split[0].toLowerCase(Locale.ROOT)) {
+//            default -> null;
+//            case "play", "list", "delete" -> {
+//                if (split.length == 2) {
+//                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
+//                }
+//                yield null;
+//            }
+//            case "addsong" -> {
+//                if (split.length == 2) {
+//                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
+//                } else {
+//                    String location = String.join(" ", Arrays.copyOfRange(split, 2, split.length));
+//                    yield Util.giveSongSuggestions(location, suggestionsBuilder);
+//                }
+//            }
+//            case "removesong" -> {
+//                if (split.length == 2) {
+//                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
+//                } else if (split.length == 3) {
+//                    Path playlistDir = SongPlayer.PLAYLISTS_DIR.resolve(split[1]);
+//                    Stream<Path> playlistFiles = Playlist.getSongFiles(playlistDir);
+//                    if (playlistFiles == null) {
+//                        yield null;
+//                    }
+//                    yield CommandSource.suggestMatching(
+//                            playlistFiles.map(Path::getFileName)
+//                                    .map(Path::toString),
+//                            suggestionsBuilder);
+//                }
+//                yield null;
+//            }
+//            case "renamesong" -> {
+//                if (split.length == 2) {
+//                    yield Util.givePlaylistSuggestions(suggestionsBuilder);
+//                } else if (split.length == 3) {
+//                    Path playlistDir = SongPlayer.PLAYLISTS_DIR.resolve(split[1]);
+//                    Stream<Path> playlistFiles = Playlist.getSongFiles(playlistDir);
+//                    if (playlistFiles == null) {
+//                        yield null;
+//                    }
+//                    int max = playlistFiles.toList().size();
+//                    Stream<String> suggestions = IntStream.range(1, max + 1).mapToObj(Integer::toString);
+//                    yield CommandSource.suggestMatching(suggestions, suggestionsBuilder);
+//                }
+//                yield null;
+//            }
+//        };
+//    }
+
+    Path getPlayListPath(CommandContext<FabricClientCommandSource> context) {
+        return SongPlayer.PLAYLISTS_DIR.resolve(context.getArgument("playlist", String.class));
     }
 }

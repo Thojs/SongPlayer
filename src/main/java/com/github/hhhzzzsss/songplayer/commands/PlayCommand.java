@@ -1,31 +1,33 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
-import com.github.hhhzzzsss.songplayer.Util;
+import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-
-import java.util.concurrent.CompletableFuture;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 class PlayCommand extends Command {
+    @Override
     public String getName() {
         return "play";
     }
-    public String[] getSyntax() {
-        return new String[] {"<song or url>"};
-    }
+
+    @Override
     public String getDescription() {
         return "Plays a song";
     }
 
-    public boolean processCommand(String args) {
-        if (args.isEmpty()) return false;
+    @Override
+    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        node.then(ClientCommandManager.argument("song", StringArgumentType.greedyString())
+            .suggests(SuggestionUtil.safeSuggestions(SuggestionUtil::giveSongSuggestions))
+            .executes(context -> {
+                String songLocation = context.getArgument("song", String.class);
+                SongHandler.getInstance().loadSong(songLocation);
 
-        SongHandler.getInstance().loadSong(args);
-        return true;
-    }
-
-    public CompletableFuture<Suggestions> getSuggestions(String args, SuggestionsBuilder suggestionsBuilder) {
-        return Util.giveSongSuggestions(args, suggestionsBuilder);
+                return 1;
+            })
+        );
     }
 }

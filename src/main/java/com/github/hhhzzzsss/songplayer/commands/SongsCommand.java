@@ -1,84 +1,83 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.Util;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
+import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 class SongsCommand extends Command {
+    @Override
     public String getName() {
         return "songs";
     }
-    public String[] getAliases() {
-        return new String[]{"list"};
-    }
-    public String[] getSyntax() {
-        return new String[] {
-                "",
-                "<subdirectory>"};
-    }
+
+    @Override
     public String getDescription() {
         return "Lists available songs. If an argument is provided, lists all songs in the subdirectory.";
     }
 
-    public boolean processCommand(String args) {
-        if (args.contains(" ")) return false;
+    @Override
+    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        node.executes(context -> {
+            processCommand(SongPlayer.SONG_DIR, "");
 
-        Path dir;
-        if (args.isEmpty()) dir = SongPlayer.SONG_DIR;
+            return 1;
+        });
 
-        else {
-            dir = SongPlayer.SONG_DIR.resolve(args);
-            if (!Files.isDirectory(dir)) {
-                SongPlayer.addChatMessage("§cDirectory not found");
-                return true;
-            }
-        }
+        node.then(ClientCommandManager.argument("path", StringArgumentType.greedyString())
+            .suggests(SuggestionUtil.safeSuggestions(SuggestionUtil::giveSongDirectorySuggestions))
+            .executes(context -> {
+                String args = context.getArgument("path", String.class);
+                Path path = SongPlayer.SONG_DIR.resolve(args);
+                processCommand(path, args);
 
+                return 1;
+            })
+        );
+    }
+
+    void processCommand(Path path, String args) {
         List<String> subdirectories;
         List<String> songs;
         try {
-            subdirectories = Files.list(dir)
+            subdirectories = Files.list(path)
                     .filter(Files::isDirectory)
                     .map(Path::getFileName)
                     .map(Path::toString)
                     .map(str -> str + "/")
                     .collect(Collectors.toList());
-            songs = Files.list(dir)
+            songs = Files.list(path)
                     .filter(Files::isRegularFile)
                     .map(Path::getFileName)
                     .map(Path::toString)
                     .collect(Collectors.toList());
-        }
-        catch (IOException e) {
+        } catch (IOException e) {
             SongPlayer.addChatMessage("§cError reading folder: §4" + e.getMessage());
-            return true;
+            return;
         }
 
         if (subdirectories.isEmpty() && songs.isEmpty()) {
             SongPlayer.addChatMessage("§bNo songs found. You can put midi or nbs files in the §3.minecraft/songs §6folder.");
-        } else {
-            SongPlayer.addChatMessage("§6----------------------------------------");
-            SongPlayer.addChatMessage("§eContents of .minecraft/songs/" + args);
-            if (!subdirectories.isEmpty()) {
-                SongPlayer.addChatMessage("§6Subdirectories: §3" + String.join(" ", subdirectories));
-            }
-
-            if (!songs.isEmpty()) {
-                SongPlayer.addChatMessage("§6Songs: §7" + String.join(", ", songs));
-            }
-            SongPlayer.addChatMessage("§6----------------------------------------");
+            return;
         }
-        return true;
-    }
-    public CompletableFuture<Suggestions> getSuggestions(String args, SuggestionsBuilder suggestionsBuilder) {
-        return Util.giveSongDirectorySuggestions(args, suggestionsBuilder);
+
+        SongPlayer.addChatMessage("§6----------------------------------------");
+        SongPlayer.addChatMessage("§eContents of .minecraft/SongPlayer/songs/" + args);
+        if (!subdirectories.isEmpty()) {
+            SongPlayer.addChatMessage("§6Subdirectories: §3" + String.join(" ", subdirectories));
+        }
+
+        if (!songs.isEmpty()) {
+            SongPlayer.addChatMessage("§6Songs: §7" + String.join(", ", songs));
+        }
+        SongPlayer.addChatMessage("§6----------------------------------------");
     }
 }

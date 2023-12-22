@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer.utils;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
@@ -15,7 +16,22 @@ import java.util.stream.Stream;
 import static com.github.hhhzzzsss.songplayer.utils.Util.resolveWithIOException;
 
 public class SuggestionUtil {
-    public static CompletableFuture<Suggestions> givePlaylistSuggestions(SuggestionsBuilder suggestionsBuilder) {
+    public interface Suggestion {
+        CompletableFuture<Suggestions> giveSuggestions(SuggestionsBuilder builder);
+    }
+
+    public static <S> SuggestionProvider<S> safeSuggestions(Suggestion suggestion) {
+        return (context, builder) -> {
+            CompletableFuture<Suggestions> suggestions = suggestion.giveSuggestions(builder);
+            if (suggestions == null) {
+                return builder.buildFuture();
+            } else {
+                return suggestions;
+            }
+        };
+    }
+
+    public static CompletableFuture<Suggestions> givePlaylistSuggestions(SuggestionsBuilder builder) {
         if (!Files.exists(SongPlayer.PLAYLISTS_DIR)) return null;
         try {
             return CommandSource.suggestMatching(
@@ -23,14 +39,15 @@ public class SuggestionUtil {
                             .filter(Files::isDirectory)
                             .map(Path::getFileName)
                             .map(Path::toString),
-                    suggestionsBuilder);
+                    builder
+            );
         } catch (IOException e) {
             return null;
         }
     }
 
-    public static CompletableFuture<Suggestions> giveSongDirectorySuggestions(SuggestionsBuilder suggestionsBuilder) {
-        String arg = suggestionsBuilder.getRemaining();
+    public static CompletableFuture<Suggestions> giveSongDirectorySuggestions(SuggestionsBuilder builder) {
+        String arg = builder.getRemaining();
 
         int lastSlash = arg.lastIndexOf("/");
         String dirString;
@@ -39,12 +56,10 @@ public class SuggestionUtil {
             dirString = arg.substring(0, lastSlash+1);
             try {
                 dir = resolveWithIOException(dir, dirString);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 return null;
             }
-        }
-        else {
+        } else {
             dirString = "";
         }
 
@@ -67,9 +82,11 @@ public class SuggestionUtil {
                 .map(path -> dirString + path.getFileName().toString() + "/")
                 .filter(str -> str.startsWith(arg))
                 .map(str -> str.substring(clipStart));
-        return CommandSource.suggestMatching(suggestions, suggestionsBuilder);
+
+        return CommandSource.suggestMatching(suggestions, builder);
     }
 
+    //TODO: doesn't work for directories with spaces in their name.
     public static CompletableFuture<Suggestions> giveSongSuggestions(SuggestionsBuilder suggestionsBuilder) {
         String arg = suggestionsBuilder.getRemaining();
 
@@ -80,8 +97,7 @@ public class SuggestionUtil {
             dirString = arg.substring(0, lastSlash+1);
             try {
                 dir = resolveWithIOException(dir, dirString);
-            }
-            catch (IOException e) {
+            } catch (IOException e) {
                 return null;
             }
         }
@@ -96,8 +112,7 @@ public class SuggestionUtil {
         int clipStart;
         if (arg.contains(" ")) {
             clipStart = arg.lastIndexOf(" ") + 1;
-        }
-        else {
+        } else {
             clipStart = 0;
         }
 
@@ -105,14 +120,14 @@ public class SuggestionUtil {
         for (Path path : songFiles.toList()) {
             if (Files.isRegularFile(path)) {
                 suggestionsList.add(dirString + path.getFileName().toString());
-            }
-            else if (Files.isDirectory(path)) {
+            } else if (Files.isDirectory(path)) {
                 suggestionsList.add(dirString + path.getFileName().toString() + "/");
             }
         }
         Stream<String> suggestions = suggestionsList.stream()
                 .filter(str -> str.startsWith(arg))
                 .map(str -> str.substring(clipStart));
+
         return CommandSource.suggestMatching(suggestions, suggestionsBuilder);
     }
 }

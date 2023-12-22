@@ -1,98 +1,80 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.Util;
 import com.github.hhhzzzsss.songplayer.item.SongItemCreatorThread;
 import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
+import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Hand;
 import net.minecraft.world.GameMode;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Locale;
-import java.util.concurrent.CompletableFuture;
 
 import static com.github.hhhzzzsss.songplayer.SongPlayer.MC;
 
 class SongItemCommand extends Command {
+    @Override
     public String getName() {
         return "songItem";
     }
-    public String[] getAliases() {
-        return new String[]{"item"};
-    }
-    public String[] getSyntax() {
-        return new String[] {
-                "create <song or url>",
-                "setSongName <name>",
-        };
-    }
+
+    @Override
     public String getDescription() {
         return "Assigns/edits song data for the item in your hand";
     }
 
-    public boolean processCommand(String args) {
-        if (args.isEmpty()) return false;
+    @Override
+    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        node.then(ClientCommandManager.literal("create")
+            .then(ClientCommandManager.argument("song", StringArgumentType.greedyString())
+                .suggests(SuggestionUtil.safeSuggestions(SuggestionUtil::giveSongSuggestions))
+                .executes(context -> {
+                    if (MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
+                        SongPlayer.addChatMessage("§cYou must be in creative mode to use this command");
+                        return 1;
+                    }
 
-        if (MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
-            SongPlayer.addChatMessage("§cYou must be in creative mode to use this command");
-            return true;
-        }
+                    String location = context.getArgument("song", String.class);
+                    try {
+                        (new SongItemCreatorThread(location)).start();
+                    } catch (IOException e) {
+                        SongPlayer.addChatMessage("§cError creating song item: §4" + e.getMessage());
+                    }
 
-        ItemStack stack = MC.player.getMainHandStack();
-        NbtCompound songPlayerNBT = SongItemUtils.getSongItemTag(stack);
-
-        String[] split = args.split(" ");
-        switch (split[0].toLowerCase(Locale.ROOT)) {
-            case "create":
-                if (split.length < 2) return false;
-                String location = String.join(" ", Arrays.copyOfRange(split, 1, split.length));
-                try {
-                    (new SongItemCreatorThread(location)).start();
-                } catch (IOException e) {
-                    SongPlayer.addChatMessage("§cError creating song item: §4" + e.getMessage());
+                    return 1;
                 }
-                return true;
-            case "setsongname":
-                if (split.length < 2) return false;
+            ))
+        );
+
+        node.then(ClientCommandManager.literal("setname")
+            .then(ClientCommandManager.argument("name", StringArgumentType.greedyString()).executes(context -> {
+                if (MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
+                    SongPlayer.addChatMessage("§cYou must be in creative mode to use this command");
+                    return 1;
+                }
+
+                ItemStack stack = MC.player.getMainHandStack();
+                NbtCompound songPlayerNBT = SongItemUtils.getSongItemTag(stack);
+
                 if (songPlayerNBT == null) {
                     SongPlayer.addChatMessage("§cYou must be holding a song item");
-                    return true;
+                    return 1;
                 }
-                String name = String.join(" ", Arrays.copyOfRange(split, 1, split.length));
+
+                String name = context.getArgument("name", String.class);
                 songPlayerNBT.putString(SongItemUtils.DISPLAY_NAME_KEY, name);
                 SongItemUtils.addSongItemDisplay(stack);
                 MC.player.setStackInHand(Hand.MAIN_HAND, stack);
                 MC.interactionManager.clickCreativeStack(MC.player.getStackInHand(Hand.MAIN_HAND), 36 + MC.player.getInventory().selectedSlot);
                 SongPlayer.addChatMessage("§6Set song's display name to §3" + name);
-                return true;
-            default:
-                return false;
-        }
-    }
 
-    public CompletableFuture<Suggestions> getSuggestions(String args, SuggestionsBuilder suggestionsBuilder) {
-        String[] split = args.split(" ", -1);
-        if (split.length <= 1) {
-            return CommandSource.suggestMatching(new String[] {
-                    "create",
-                    "setSongName",
-            }, suggestionsBuilder);
-        }
-        switch (split[0].toLowerCase(Locale.ROOT)) {
-            case "create":
-                if (split.length >= 2) {
-                    String location = String.join(" ", Arrays.copyOfRange(split, 1, split.length));
-                    return Util.giveSongSuggestions(location, suggestionsBuilder);
-                }
-            case "setsongname":
-            default:
-                return null;
-        }
+                return 1;
+            }))
+        );
     }
 }
