@@ -5,8 +5,9 @@ import net.minecraft.util.math.BlockPos;
 import java.util.Collection;
 
 public interface StageType {
-    //TODO: remove position parameter and make it return delta positions.
-    void getBlocks(BlockPos position, Collection<BlockPos> noteblockLocations, Collection<BlockPos> breakLocations);
+    String getIdentifier();
+
+    void getBlocks(Collection<BlockPos> noteblockLocations, Collection<BlockPos> breakLocations);
 
     default boolean withinBreakingDistance(int dx, int dy, int dz) {
         double dy1 = dy + 0.5 - 1.62; // Standing eye height
