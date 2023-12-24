@@ -5,14 +5,18 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 
-public class ConverterRegistry {
-    public static final ConverterRegistry instance = new ConverterRegistry();
-    private ConverterRegistry() {}
+public class SongParserRegistry {
+    public static final SongParserRegistry instance = new SongParserRegistry();
+    private SongParserRegistry() {}
 
     private final List<SongParser> converters = new ArrayList<>();
+    private List<SongParser> sortedMIMEConverterList = new ArrayList<>();
+    private List<SongParser> sortedFileConverterList = new ArrayList<>();
 
     public void registerConverters(SongParser... converters) {
         this.converters.addAll(List.of(converters));
+        updateSortedFileConverterList();
+        updateSortedMIMEConverterList();
     }
 
     public List<SongParser> getMIMEConverter(String mime) {
@@ -22,7 +26,7 @@ public class ConverterRegistry {
             if (mimeTypes.contains(mime)) return List.of(converter);
         }
 
-        return getSortedMIMEConverterList();
+        return sortedMIMEConverterList;
     }
 
     public List<SongParser> getExtensionConverter(String extension) {
@@ -32,26 +36,26 @@ public class ConverterRegistry {
             if (fileExtensions.contains(extension)) return List.of(converter);
         }
 
-        return getSortedFileConverterList();
+        return sortedFileConverterList;
     }
 
-    List<SongParser> getSortedFileConverterList() {
+    private void updateSortedFileConverterList() {
         List<SongParser> sorted = new ArrayList<>(converters);
         sorted.sort(Comparator.comparingInt(a -> {
             Collection<String> extensions = a.getFileExtensions();
             if (extensions == null) return 0;
             return extensions.size();
         }));
-        return sorted;
+        sortedFileConverterList = sorted;
     }
 
-    List<SongParser> getSortedMIMEConverterList() {
+    private void updateSortedMIMEConverterList() {
         List<SongParser> sorted = new ArrayList<>(converters);
         sorted.sort(Comparator.comparingInt(a -> {
             Collection<String> mimeTypes = a.getMIMETypes();
             if (mimeTypes == null) return 0;
             return mimeTypes.size();
         }));
-        return sorted;
+        sortedMIMEConverterList = sorted;
     }
 }

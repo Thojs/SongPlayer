@@ -1,7 +1,7 @@
 package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.commands.SongPlayerCommand;
-import com.github.hhhzzzsss.songplayer.conversion.ConverterRegistry;
+import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
 import com.github.hhhzzzsss.songplayer.conversion.MidiParser;
 import com.github.hhhzzzsss.songplayer.conversion.NBSParser;
 import com.github.hhhzzzsss.songplayer.conversion.SPParser;
@@ -50,7 +50,7 @@ public class SongPlayer implements ModInitializer {
 		);
 
 		// Register converters
-		ConverterRegistry.instance.registerConverters(
+		SongParserRegistry.instance.registerConverters(
 				new MidiParser(),
 				new NBSParser(),
 				new SPParser()
