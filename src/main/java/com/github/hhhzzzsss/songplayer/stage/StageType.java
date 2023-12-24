@@ -7,7 +7,7 @@ import java.util.Collection;
 public interface StageType {
     String getIdentifier();
 
-    void getBlocks(Collection<BlockPos> noteblockLocations, Collection<BlockPos> breakLocations);
+    void getBlocks(Collection<BlockPos> noteLocations, Collection<BlockPos> breakLocations);
 
     default boolean withinBreakingDistance(int dx, int dy, int dz) {
         double dy1 = dy + 0.5 - 1.62; // Standing eye height

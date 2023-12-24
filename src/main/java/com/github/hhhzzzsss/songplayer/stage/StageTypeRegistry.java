@@ -7,6 +7,8 @@ public class StageTypeRegistry {
     public static final StageTypeRegistry instance = new StageTypeRegistry();
     private final HashMap<String, StageType> types = new HashMap<>();
 
+    private StageTypeRegistry() {}
+
     public void registerStageTypes(StageType... types) {
         for (StageType type : types) {
             if (type.getIdentifier().contains(" ")) continue; // Spaces are not allowed.
