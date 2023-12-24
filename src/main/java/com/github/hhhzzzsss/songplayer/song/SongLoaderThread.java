@@ -39,26 +39,27 @@ public class SongLoaderThread extends Thread {
 	
 	public void run() {
 		try {
-			byte[] bytes;
-			List<SongParser> converters;
+			byte[] content;
+			List<SongParser> parsers;
 
+			// Get content from file/url & retrieve parsers.
 			if (songUrl != null) {
 				DownloadResponse res = DownloadUtils.downloadToByteArray(songUrl, 10*1024*1024);
-                bytes = res.content;
+                content = res.content;
 				filename = Paths.get(songUrl.toURI().getPath()).getFileName().toString();
 
-				converters = SongParserRegistry.instance.getMIMEConverter(res.mimeType);
+				parsers = SongParserRegistry.instance.getMIMEParser(res.mimeType);
 			} else {
-				bytes = Files.readAllBytes(songPath);
+				content = Files.readAllBytes(songPath);
 				filename = songPath.getFileName().toString();
 
 				String extension = FileNameUtils.getExtension(songPath);
-				converters = SongParserRegistry.instance.getExtensionConverter(extension);
+				parsers = SongParserRegistry.instance.getExtensionParser(extension);
 			}
 
-			// Parse
-			for (SongParser converter : converters) {
-				song = converter.parse(bytes, filename);
+			// Parse content
+			for (SongParser converter : parsers) {
+				song = converter.parse(content, filename);
 				if (song != null) break;
 			}
 
