@@ -36,7 +36,7 @@ public class DownloadUtils {
 		conn.setReadTimeout(10000);
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0");
 
-		String contentType = conn.getHeaderField("Content-Type"); //todo connect this with mime type.
+		String contentType = conn.getHeaderField("Content-Type");
 		BufferedInputStream downloadStream = new BufferedInputStream(conn.getInputStream());
 		ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 

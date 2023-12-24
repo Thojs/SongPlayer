@@ -130,7 +130,6 @@ public class StageBuilder {
 
 	// This doesn't check for whether the block above the noteblock position is also reachable
 	// Usually there is sky above you though so hopefully this doesn't cause a problem most of the time
-	//todo test this
 	boolean withinBreakingDist(int dx, int dy, int dz) {
 		double dy1 = dy + 0.5 - 1.62; // Standing eye height
 		double dy2 = dy + 0.5 - 1.27; // Crouching eye height

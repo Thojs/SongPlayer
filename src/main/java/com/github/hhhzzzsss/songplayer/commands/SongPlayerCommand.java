@@ -29,7 +29,7 @@ public class SongPlayerCommand {
     );
 
     public void registerCommand(CommandDispatcher<FabricClientCommandSource> dispatcher) {
-        LiteralArgumentBuilder<FabricClientCommandSource> rootCommand = ClientCommandManager.literal("songplayer"); //TODO: add execution here with mod data?
+        LiteralArgumentBuilder<FabricClientCommandSource> rootCommand = ClientCommandManager.literal("songplayer");
 
         // Add sub-commands
         for (Command command : commands) {
