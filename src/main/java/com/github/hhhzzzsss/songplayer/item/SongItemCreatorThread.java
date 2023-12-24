@@ -1,7 +1,7 @@
 package com.github.hhhzzzsss.songplayer.item;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.conversion.SPConverter;
+import com.github.hhhzzzsss.songplayer.conversion.SPParser;
 import com.github.hhhzzzsss.songplayer.song.SongLoaderThread;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
@@ -24,7 +24,7 @@ public class SongItemCreatorThread extends SongLoaderThread {
         super.run();
         byte[] songData;
         try {
-            songData = SPConverter.getBytesFromSong(song);
+            songData = SPParser.getBytesFromSong(song);
         } catch (IOException e) {
             SongPlayer.addChatMessage("§cError creating song item: §4" + e.getMessage());
             return;
@@ -45,7 +45,7 @@ public class SongItemCreatorThread extends SongLoaderThread {
             newStack = SongItemUtils.createSongItem(newStack, songData, filename, song.name);
             SongPlayer.MC.player.getInventory().setStack(slotId, newStack);
             SongPlayer.MC.interactionManager.clickCreativeStack(SongPlayer.MC.player.getStackInHand(Hand.MAIN_HAND), 36 + slotId);
-            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3").append(newStack.getItem().getName()));
+            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3" + song.name));
         });
     }
 }

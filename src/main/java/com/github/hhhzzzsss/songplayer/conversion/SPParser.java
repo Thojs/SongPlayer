@@ -8,61 +8,65 @@ import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
+import java.util.Collection;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
-public class SPConverter {
+public class SPParser implements SongParser {
     public static final byte[] FILE_TYPE_SIGNATURE = {-53, 123, -51, -124, -122, -46, -35, 38};
     public static final long MAX_UNCOMPRESSED_SIZE = 50*1024*1024;
 
-    public static Song getSongFromBytes(byte[] bytes, String fileName) throws IOException {
-        InputStream is = new Util.LimitedSizeInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)), MAX_UNCOMPRESSED_SIZE);
-        bytes = is.readAllBytes();
-        is.close();
+    @Override
+    public Song parse(byte[] bytes, String fileName) {
+        try {
+            InputStream is = new Util.LimitedSizeInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)), MAX_UNCOMPRESSED_SIZE);
+            bytes = is.readAllBytes();
+            is.close();
 
-        ByteBuffer buffer = ByteBuffer.wrap(bytes);
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
+            ByteBuffer buffer = ByteBuffer.wrap(bytes);
+            buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        for (byte b : FILE_TYPE_SIGNATURE) {
-            if (b != buffer.get()) {
-                throw new IOException("Invalid file type signature");
+            for (byte b : FILE_TYPE_SIGNATURE) {
+                if (b != buffer.get()) {
+                    throw new IOException("Invalid file type signature");
+                }
             }
+
+            byte version = buffer.get();
+            // Currently on format version 1
+            if (version != 1) {
+                throw new IOException("Unsupported format version!");
+            }
+
+            long songLength = buffer.getLong();
+            String songName = getString(buffer, bytes.length);
+            int loop = buffer.get() & 0xFF;
+            int loopCount = buffer.get() & 0xFF;
+            long loopPosition = buffer.getLong();
+
+            Song song = new Song(!songName.trim().isEmpty() ? songName : fileName);
+            song.length = songLength;
+            song.looping = loop > 0;
+            song.loopCount = loopCount;
+            song.loopPosition = loopPosition;
+
+            long time = 0;
+            while (true) {
+                int noteId = buffer.getShort();
+                if (noteId >= 0 && noteId < 400) {
+                    time += getVarLong(buffer);
+                    song.add(new Note(noteId, time));
+                } else if ((noteId & 0xFFFF) == 0xFFFF) {
+                    break;
+                } else {
+                    throw new IOException("Song contains invalid note id of " + noteId);
+                }
+            }
+
+            return song;
+        } catch (IOException ex) {
+            return null;
         }
-
-        byte version = buffer.get();
-        // Currently on format version 1
-        if (version != 1) {
-            throw new IOException("Unsupported format version!");
-        }
-
-        long songLength = buffer.getLong();
-        String songName = getString(buffer, bytes.length);
-        int loop = buffer.get() & 0xFF;
-        int loopCount = buffer.get() & 0xFF;
-        long loopPosition = buffer.getLong();
-
-        Song song = new Song(!songName.trim().isEmpty() ? songName : fileName);
-        song.length = songLength;
-        song.looping = loop > 0;
-        song.loopCount = loopCount;
-        song.loopPosition = loopPosition;
-
-        long time = 0;
-        while (true) {
-            int noteId = buffer.getShort();
-            if (noteId >= 0 && noteId < 400) {
-                time += getVarLong(buffer);
-                song.add(new Note(noteId, time));
-            }
-            else if ((noteId & 0xFFFF) == 0xFFFF) {
-                break;
-            }
-            else {
-                throw new IOException("Song contains invalid note id of " + noteId);
-            }
-        }
-
-        return song;
     }
 
     public static byte[] getBytesFromSong(Song song) throws IOException {
@@ -155,5 +159,15 @@ public class SPConverter {
         os.write((int) (val >>> 40) & 0xFF);
         os.write((int) (val >>> 48) & 0xFF);
         os.write((int) (val >>> 56) & 0xFF);
+    }
+
+    @Override
+    public Collection<String> getMIMETypes() {
+        return null;
+    }
+
+    @Override
+    public Collection<String> getFileExtensions() {
+        return null;
     }
 }

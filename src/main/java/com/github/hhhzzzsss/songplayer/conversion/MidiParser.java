@@ -7,19 +7,21 @@ import com.github.hhhzzzsss.songplayer.song.Song;
 import javax.sound.midi.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
+import java.util.*;
 
-public class MidiConverter {
+public class MidiParser implements SongParser {
 	public static final int SET_INSTRUMENT = 0xC0;
 	public static final int SET_TEMPO = 0x51;
 	public static final int NOTE_ON = 0x90;
     public static final int NOTE_OFF = 0x80;
 
-	public static Song getSongFromBytes(byte[] bytes, String name) throws InvalidMidiDataException, IOException {
-		Sequence sequence = MidiSystem.getSequence(new ByteArrayInputStream(bytes));
-		return getSong(sequence, name);
+	@Override
+	public Song parse(byte[] bytes, String name) {
+        try {
+			return getSong(MidiSystem.getSequence(new ByteArrayInputStream(bytes)), name);
+        } catch (InvalidMidiDataException | IOException e) {
+            return null;
+        }
 	}
     
 	public static Song getSong(Sequence sequence, String name) {
@@ -66,8 +68,7 @@ public class MidiConverter {
 				if (message instanceof ShortMessage sm) {
                     if (sm.getCommand() == SET_INSTRUMENT) {
 						instrumentIds[sm.getChannel()] = sm.getData1();
-					}
-					else if (sm.getCommand() == NOTE_ON) {
+					} else if (sm.getCommand() == NOTE_ON) {
 						if (sm.getData2() == 0) continue;
 						int pitch = sm.getData1();
 						long deltaTick = event.getTick() - prevTick;
@@ -77,8 +78,7 @@ public class MidiConverter {
 						Note note;
 						if (sm.getChannel() == 9) {
 							note = getMidiPercussionNote(pitch, microTime);
-						}
-						else {
+						} else {
 							note = getMidiInstrumentNote(instrumentIds[sm.getChannel()], pitch, microTime);
 						}
 						if (note != null) {
@@ -89,8 +89,7 @@ public class MidiConverter {
 						if (time > song.length) {
 							song.length = time;
 						}
-					}
-					else if (sm.getCommand() == NOTE_OFF) {
+					} else if (sm.getCommand() == NOTE_OFF) {
 						long deltaTick = event.getTick() - prevTick;
 						prevTick = event.getTick();
 						microTime += (mpq/tpq) * deltaTick;
@@ -113,7 +112,7 @@ public class MidiConverter {
 		Instrument[] instrumentList = instrumentMap.get(midiInstrument);
 		if (instrumentList != null) {
 			for (Instrument candidateInstrument : instrumentList) {
-				if (midiPitch >= candidateInstrument.offset && midiPitch <= candidateInstrument.offset+24) {
+				if (midiPitch >= candidateInstrument.midiOffset && midiPitch <= candidateInstrument.midiOffset +24) {
 					instrument = candidateInstrument;
 					break;
 				}
@@ -124,7 +123,7 @@ public class MidiConverter {
 			return null;
 		}
 
-		int pitch = midiPitch-instrument.offset;
+		int pitch = midiPitch-instrument.midiOffset;
 		int noteId = pitch + instrument.instrumentId*25;
 		long time = microTime / 1000L;
 
@@ -349,5 +348,15 @@ public class MidiConverter {
 		percussionMap.put(85, 21 + 25* Instrument.HAT.instrumentId);
 		percussionMap.put(86, 14 + 25* Instrument.BASEDRUM.instrumentId);
 		percussionMap.put(87, 7  + 25* Instrument.BASEDRUM.instrumentId);
+	}
+
+	@Override
+	public Collection<String> getMIMETypes() {
+		return List.of("audio/midi", "audio/x-midi");
+	}
+
+	@Override
+	public Collection<String> getFileExtensions() {
+		return List.of("mid", "midi");
 	}
 }

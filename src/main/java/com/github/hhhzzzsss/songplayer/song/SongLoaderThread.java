@@ -1,20 +1,24 @@
 package com.github.hhhzzzsss.songplayer.song;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.conversion.SongParser;
+import com.github.hhhzzzsss.songplayer.conversion.ConverterRegistry;
+import com.github.hhhzzzsss.songplayer.utils.DownloadResponse;
 import com.github.hhhzzzsss.songplayer.utils.DownloadUtils;
 import com.github.hhhzzzsss.songplayer.utils.Util;
-import com.github.hhhzzzsss.songplayer.conversion.MidiConverter;
-import com.github.hhhzzzsss.songplayer.conversion.NBSConverter;
+import org.apache.commons.compress.utils.FileNameUtils;
 
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 
 public class SongLoaderThread extends Thread {
     private Path songPath;
 	private URL songUrl;
+
 	public Exception exception;
 	public Song song;
 	public String filename;
@@ -24,16 +28,8 @@ public class SongLoaderThread extends Thread {
 	public SongLoaderThread(String location) throws IOException {
         if (location.startsWith("http://") || location.startsWith("https://")) {
 			songUrl = new URL(location);
-		} else if (Files.exists(getSongFile(location))) {
-			songPath = getSongFile(location);
-		} else if (Files.exists(getSongFile(location+".mid"))) {
-			songPath = getSongFile(location+".mid");
-		} else if (Files.exists(getSongFile(location+".midi"))) {
-			songPath = getSongFile(location+".midi");
-		} else if (Files.exists(getSongFile(location+".nbs"))) {
-			songPath = getSongFile(location+".nbs");
 		} else {
-			throw new IOException("Could not find song: " + location);
+			songPath = getSongFile(location);
 		}
 	}
 
@@ -44,22 +40,26 @@ public class SongLoaderThread extends Thread {
 	public void run() {
 		try {
 			byte[] bytes;
+			List<SongParser> converters;
+
 			if (songUrl != null) {
-				bytes = DownloadUtils.downloadToByteArray(songUrl, 10*1024*1024);
+				DownloadResponse res = DownloadUtils.downloadToByteArray(songUrl, 10*1024*1024);
+                bytes = res.content;
 				filename = Paths.get(songUrl.toURI().getPath()).getFileName().toString();
+
+				converters = ConverterRegistry.instance.getMIMEConverter(res.mimeType);
 			} else {
 				bytes = Files.readAllBytes(songPath);
 				filename = songPath.getFileName().toString();
+
+				String extension = FileNameUtils.getExtension(songPath);
+				converters = ConverterRegistry.instance.getExtensionConverter(extension);
 			}
 
-			try {
-				song = MidiConverter.getSongFromBytes(bytes, filename);
-			} catch (Exception ignored) {}
-
-			if (song == null) {
-				try {
-					song = NBSConverter.getSongFromBytes(bytes, filename);
-				} catch (Exception ignored) {}
+			// Parse
+			for (SongParser converter : converters) {
+				song = converter.parse(bytes, filename);
+				if (song != null) break;
 			}
 
 			if (song == null) throw new IOException("Invalid song format");

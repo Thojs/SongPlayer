@@ -13,9 +13,7 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
 public class DownloadUtils {
-	
 	private static class DefaultTrustManager implements X509TrustManager {
-
         @Override
         public void checkClientTrusted(X509Certificate[] arg0, String arg1) {}
 
@@ -28,14 +26,17 @@ public class DownloadUtils {
         }
     }
 	
-	public static byte[] downloadToByteArray(URL url, int maxSize) throws IOException, KeyManagementException, NoSuchAlgorithmException {
+	public static DownloadResponse downloadToByteArray(URL url, int maxSize) throws IOException, KeyManagementException, NoSuchAlgorithmException {
 		SSLContext ctx = SSLContext.getInstance("TLS");
         ctx.init(new KeyManager[0], new TrustManager[] {new DefaultTrustManager()}, new SecureRandom());
         SSLContext.setDefault(ctx);
+
 		URLConnection conn = url.openConnection();
 		conn.setConnectTimeout(5000);
 		conn.setReadTimeout(10000);
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0");
+
+		String contentType = conn.getHeaderField("Content-Type"); //todo connect this with mime type.
 		BufferedInputStream downloadStream = new BufferedInputStream(conn.getInputStream());
 		ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 
@@ -53,14 +54,10 @@ public class DownloadUtils {
 					return null;
 				}
 			}
-			return byteArrayStream.toByteArray();
+			return new DownloadResponse(byteArrayStream.toByteArray(), contentType);
 		} finally {
 			// Closing a ByteArrayInputStream has no effect, so I do not close it.
 			downloadStream.close();
 		}
-	}
-	
-	public static InputStream downloadToInputStream(URL url, int maxSize) throws KeyManagementException, NoSuchAlgorithmException, IOException {
-		return new ByteArrayInputStream(downloadToByteArray(url, maxSize));
 	}
 }

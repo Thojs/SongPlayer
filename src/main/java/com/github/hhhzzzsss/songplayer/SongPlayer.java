@@ -1,6 +1,10 @@
 package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.commands.SongPlayerCommand;
+import com.github.hhhzzzsss.songplayer.conversion.ConverterRegistry;
+import com.github.hhhzzzsss.songplayer.conversion.MidiParser;
+import com.github.hhhzzzsss.songplayer.conversion.NBSParser;
+import com.github.hhhzzzsss.songplayer.conversion.SPParser;
 import com.github.hhhzzzsss.songplayer.stage.DefaultStage;
 import com.github.hhhzzzsss.songplayer.stage.SphericalStage;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
@@ -43,6 +47,13 @@ public class SongPlayer implements ModInitializer {
 				new DefaultStage(),
 				new WideStage(),
 				new SphericalStage()
+		);
+
+		// Register converters
+		ConverterRegistry.instance.registerConverters(
+				new MidiParser(),
+				new NBSParser(),
+				new SPParser()
 		);
 
 		// Register commands

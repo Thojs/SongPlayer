@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.item;
 
-import com.github.hhhzzzsss.songplayer.conversion.SPConverter;
+import com.github.hhhzzzsss.songplayer.conversion.SPParser;
 import com.github.hhhzzzsss.songplayer.song.Note;
 import com.github.hhhzzzsss.songplayer.song.SongLoaderThread;
 import net.minecraft.item.ItemStack;
@@ -27,7 +27,7 @@ public class SongItemLoaderThread extends SongLoaderThread {
     @Override
     public void run() {
         try {
-            song = SPConverter.getSongFromBytes(songData, filename);
+            song = new SPParser().parse(songData, filename);
             if (displayName == null || !displayName.isEmpty()) {
                 song.name = displayName;
             }
