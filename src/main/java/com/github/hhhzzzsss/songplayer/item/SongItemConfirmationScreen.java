@@ -53,7 +53,7 @@ public class SongItemConfirmationScreen extends Screen {
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
         this.renderBackground(context, mouseX, mouseY, delta);
 
-        context.drawCenteredTextWithShadow(textRenderer, this.title, this.width / 2, 40, 0xFFFFFF);
+        context.drawCenteredTextWithShadow(textRenderer, this.title, this.width / 2, 60, 0xFFFFFF);
 
         if (!loaderThread.isAlive()) {
             if (loaderThread.exception != null) {
@@ -65,6 +65,8 @@ public class SongItemConfirmationScreen extends Screen {
             if (loadedText == null) {
                 String[] loadedMessages = {
                         "§3" + loaderThread.song.name,
+                        "",
+                        String.format("§7Size: %.2f%s", loaderThread.songData.length / 1024f, "MB"),
                         String.format("§7Max notes per second: %s%d", getNumberColor(loaderThread.maxNotesPerSecond), loaderThread.maxNotesPerSecond),
                         String.format("§7Avg notes per second: %s%.2f", getNumberColor(loaderThread.avgNotesPerSecond), loaderThread.avgNotesPerSecond),
                 };
@@ -72,16 +74,16 @@ public class SongItemConfirmationScreen extends Screen {
                 this.loadedText = MultilineText.createFromTexts(this.textRenderer, messageList);
 
                 int loadedTextHeight = this.loadedText.count() * this.textRenderer.fontHeight;
-                addButtons(60 + loadedTextHeight + 12);
+                addButtons(80 + loadedTextHeight + 12);
 
                 loaded = true;
             }
         }
 
         if (loaded) {
-            loadedText.drawCenterWithShadow(context, this.width / 2, 60);
+            loadedText.drawCenterWithShadow(context, this.width / 2, 80);
         } else {
-            unloadedText.drawCenterWithShadow(context, this.width / 2, 60);
+            unloadedText.drawCenterWithShadow(context, this.width / 2, 80);
         }
 
         super.render(context, mouseX, mouseY, delta);

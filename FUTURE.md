@@ -4,5 +4,5 @@
 - Put playback controls on an interface.
 - client side play mode.
 - Translations
-- Suggest only possible files.
 - Decrease suggestion length of big paths.
+- Kotlin?

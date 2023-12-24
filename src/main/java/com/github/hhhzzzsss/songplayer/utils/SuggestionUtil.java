@@ -1,10 +1,12 @@
 package com.github.hhhzzzsss.songplayer.utils;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.suggestion.Suggestions;
 import com.mojang.brigadier.suggestion.SuggestionsBuilder;
 import net.minecraft.command.CommandSource;
+import org.apache.commons.compress.utils.FileNameUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -119,11 +121,13 @@ public class SuggestionUtil {
         ArrayList<String> suggestionsList = new ArrayList<>();
         for (Path path : songFiles.toList()) {
             if (Files.isRegularFile(path)) {
+                if (!SongParserRegistry.instance.getSupportedFileExtensions().contains(FileNameUtils.getExtension(path))) continue;
                 suggestionsList.add(dirString + path.getFileName().toString());
             } else if (Files.isDirectory(path)) {
                 suggestionsList.add(dirString + path.getFileName().toString() + "/");
             }
         }
+
         Stream<String> suggestions = suggestionsList.stream()
                 .filter(str -> str.startsWith(arg))
                 .map(str -> str.substring(clipStart));
