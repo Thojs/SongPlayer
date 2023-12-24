@@ -6,4 +6,3 @@
 - Translations
 - Suggest only possible files.
 - Decrease suggestion length of big paths.
-![img.png](img.png)
