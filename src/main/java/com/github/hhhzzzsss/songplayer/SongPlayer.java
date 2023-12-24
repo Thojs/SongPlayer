@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.commands.SongPlayerCommand;
+import com.github.hhhzzzsss.songplayer.commands.TimestampArgumentType;
 import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
 import com.github.hhhzzzsss.songplayer.conversion.MidiParser;
 import com.github.hhhzzzsss.songplayer.conversion.NBSParser;
@@ -13,10 +14,12 @@ import com.github.hhhzzzsss.songplayer.stage.WideStage;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
+import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
 import net.minecraft.entity.Entity;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
@@ -58,6 +61,7 @@ public class SongPlayer implements ModInitializer {
 		);
 
 		// Register commands
+		ArgumentTypeRegistry.registerArgumentType(Identifier.of("songplayer", "timestamp"), TimestampArgumentType.class, ConstantArgumentSerializer.of(TimestampArgumentType::timestamp));
 		ClientCommandRegistrationCallback.EVENT.register(((dispatcher, registryAccess) -> new SongPlayerCommand().registerCommand(dispatcher)));
 	}
 

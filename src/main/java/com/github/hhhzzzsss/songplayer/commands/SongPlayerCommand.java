@@ -11,7 +11,7 @@ import java.util.List;
 public class SongPlayerCommand {
     private static final List<Command> commands = List.of(
             new AnnouncementCommand(),
-            new GotoCommand(), //todo create argument type for time
+            new GotoCommand(),
             new LoopCommand(),
             new PlayCommand(),
             //todo playlist cmd
