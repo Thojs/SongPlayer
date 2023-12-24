@@ -40,7 +40,7 @@ public class SongItemConfirmationScreen extends Screen {
         int centerX = this.width / 2;
 
         this.addDrawableChild(ButtonWidget.builder(CONFIRM, button -> {
-            SongHandler.getInstance().loadSong(loaderThread);
+            SongHandler.instance.loadSong(loaderThread);
             this.client.setScreen(null);
         }).dimensions(centerX - 105, y, 100, 20).build());
 

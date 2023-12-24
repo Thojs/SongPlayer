@@ -19,17 +19,19 @@ class QueueCommand extends Command {
 
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        SongHandler instance = SongHandler.instance;
+
         node.executes(context -> {
-            if (SongHandler.getInstance().currentSong == null && SongHandler.getInstance().songQueue.isEmpty()) {
+            if (instance.currentSong == null && instance.songQueue.isEmpty()) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
             SongPlayer.addChatMessage("§6------------------------------");
-            SongPlayer.addChatMessage("§6Current song: §3" + SongHandler.getInstance().currentSong.name);
+            SongPlayer.addChatMessage("§6Current song: §3" + instance.currentSong.name);
 
             int index = 0;
-            for (Song song : SongHandler.getInstance().songQueue) {
+            for (Song song : instance.songQueue) {
                 index++;
                 SongPlayer.addChatMessage(String.format("§6%d. §3%s", index, song.name));
             }

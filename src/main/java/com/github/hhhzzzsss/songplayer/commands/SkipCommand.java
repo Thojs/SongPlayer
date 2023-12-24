@@ -19,13 +19,13 @@ class SkipCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            if (SongHandler.getInstance().currentSong == null) {
+            if (SongHandler.instance.currentSong == null) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
             SongPlayer.addChatMessage("§6Skipped the current song.");
-            SongHandler.getInstance().currentSong = null;
+            SongHandler.instance.currentSong = null;
 
             return 1;
         });

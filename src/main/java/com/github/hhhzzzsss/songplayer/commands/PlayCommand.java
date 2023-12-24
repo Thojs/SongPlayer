@@ -24,7 +24,7 @@ class PlayCommand extends Command {
             .suggests(SuggestionUtil.safeSuggestions(SuggestionUtil::giveSongSuggestions))
             .executes(context -> {
                 String songLocation = context.getArgument("song", String.class);
-                SongHandler.getInstance().loadSong(songLocation);
+                SongHandler.instance.loadSong(songLocation);
 
                 return 1;
             })

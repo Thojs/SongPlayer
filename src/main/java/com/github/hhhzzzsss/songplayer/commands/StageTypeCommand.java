@@ -22,6 +22,14 @@ class StageTypeCommand extends Command {
 
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
+        node.executes(context -> {
+            String stageType = Config.getConfig().stageType;
+
+            SongPlayer.addChatMessage("§6Current stage type is §3" + stageType);
+
+            return 1;
+        });
+
         node.then(ClientCommandManager.argument("type", StringArgumentType.word())
             .suggests((context, builder) -> {
                 for (String identifier : StageTypeRegistry.instance.getIdentifiers()) {

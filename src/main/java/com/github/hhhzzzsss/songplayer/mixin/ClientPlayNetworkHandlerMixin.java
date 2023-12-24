@@ -15,17 +15,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientPlayNetworkHandlerMixin {
 	@Inject(at = @At("TAIL"), method = "onGameJoin(Lnet/minecraft/network/packet/s2c/play/GameJoinS2CPacket;)V")
 	public void onOnGameJoin(GameJoinS2CPacket packet, CallbackInfo ci) {
-		SongHandler.getInstance().cleanup();
+		SongHandler.instance.cleanup();
 	}
 
 	@Inject(at = @At("TAIL"), method = "onPlayerRespawn(Lnet/minecraft/network/packet/s2c/play/PlayerRespawnS2CPacket;)V")
 	public void onOnPlayerRespawn(PlayerRespawnS2CPacket packet, CallbackInfo ci) {
-		SongHandler.getInstance().cleanup();
+		SongHandler.instance.cleanup();
 	}
 
 	@Inject(at = @At("TAIL"), method = "onPlayerAbilities(Lnet/minecraft/network/packet/s2c/play/PlayerAbilitiesS2CPacket;)V")
 	public void onOnPlayerAbilities(PlayerAbilitiesS2CPacket packet, CallbackInfo ci) {
-		SongHandler handler = SongHandler.getInstance();
+		SongHandler handler = SongHandler.instance;
 		if (handler.currentSong != null || handler.currentPlaylist != null || !handler.songQueue.isEmpty()) {
 			SongPlayer.MC.player.getAbilities().flying = handler.wasFlying;
 		}

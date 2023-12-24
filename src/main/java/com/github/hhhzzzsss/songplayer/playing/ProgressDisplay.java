@@ -3,20 +3,13 @@ package com.github.hhhzzzsss.songplayer.playing;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 
 import java.util.Objects;
 
 public class ProgressDisplay {
-    private static ProgressDisplay instance = null;
-    public static ProgressDisplay getInstance() {
-        if (instance == null) {
-            instance = new ProgressDisplay();
-        }
-        return instance;
-    }
+    public static final ProgressDisplay instance = new ProgressDisplay();
     private ProgressDisplay() {}
 
     public MutableText topText = Text.empty();
@@ -30,9 +23,7 @@ public class ProgressDisplay {
     }
 
     public void onRenderHUD(DrawContext context, int scaledWidth, int scaledHeight, int heldItemTooltipFade) {
-        if (fade <= 0) {
-            return;
-        }
+        if (fade <= 0) return;
 
         int bottomTextWidth = SongPlayer.MC.textRenderer.getWidth(bottomText);
         int topTextWidth = SongPlayer.MC.textRenderer.getWidth(topText);
@@ -61,8 +52,6 @@ public class ProgressDisplay {
     }
 
     public void onTick() {
-        if (fade > 0) {
-            fade--;
-        }
+        if (fade > 0) fade--;
     }
 }

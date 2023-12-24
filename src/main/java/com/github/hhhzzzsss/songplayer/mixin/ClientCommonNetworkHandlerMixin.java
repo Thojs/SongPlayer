@@ -3,7 +3,7 @@ package com.github.hhhzzzsss.songplayer.mixin;
 import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.playing.Stage;
+import com.github.hhhzzzsss.songplayer.playing.StageBuilder;
 import net.minecraft.client.network.ClientCommonNetworkHandler;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.network.ClientConnection;
@@ -27,28 +27,26 @@ public class ClientCommonNetworkHandlerMixin {
 
     @Inject(at = @At("HEAD"), method = "sendPacket(Lnet/minecraft/network/packet/Packet;)V", cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
-        Stage stage = SongHandler.getInstance().stage;
+        StageBuilder stageBuilder = SongHandler.instance.stageBuilder;
 
-        if (stage != null && packet instanceof PlayerMoveC2SPacket) {
-            if (!Config.getConfig().rotate) {
-                connection.send(new PlayerMoveC2SPacket.Full(stage.position.getX() + 0.5, stage.position.getY(), stage.position.getZ() + 0.5, SongPlayer.MC.player.getYaw(), SongPlayer.MC.player.getPitch(), true));
-                if (SongPlayer.fakePlayer != null) {
-                    SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
-                }
-            }
+        if (stageBuilder != null && packet instanceof PlayerMoveC2SPacket) {
             ci.cancel();
-        }
-        else if (packet instanceof ClientCommandC2SPacket) {
-            ClientCommandC2SPacket.Mode mode = ((ClientCommandC2SPacket) packet).getMode();
+            if (Config.getConfig().rotate) return;
+
+            connection.send(new PlayerMoveC2SPacket.Full(stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5, SongPlayer.MC.player.getYaw(), SongPlayer.MC.player.getPitch(), true));
             if (SongPlayer.fakePlayer != null) {
-                if (mode == ClientCommandC2SPacket.Mode.PRESS_SHIFT_KEY) {
-                    SongPlayer.fakePlayer.setSneaking(true);
-                    SongPlayer.fakePlayer.setPose(EntityPose.CROUCHING);
-                }
-                else if (mode == ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY) {
-                    SongPlayer.fakePlayer.setSneaking(false);
-                    SongPlayer.fakePlayer.setPose(EntityPose.STANDING);
-                }
+                SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
+            }
+        } else if (packet instanceof ClientCommandC2SPacket) {
+            ClientCommandC2SPacket.Mode mode = ((ClientCommandC2SPacket) packet).getMode();
+            if (SongPlayer.fakePlayer == null) return;
+
+            if (mode == ClientCommandC2SPacket.Mode.PRESS_SHIFT_KEY) {
+                SongPlayer.fakePlayer.setSneaking(true);
+                SongPlayer.fakePlayer.setPose(EntityPose.CROUCHING);
+            } else if (mode == ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY) {
+                SongPlayer.fakePlayer.setSneaking(false);
+                SongPlayer.fakePlayer.setPose(EntityPose.STANDING);
             }
         }
     }

@@ -20,12 +20,12 @@ class LoopCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            if (SongHandler.getInstance().currentSong == null) {
+            if (SongHandler.instance.currentSong == null) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
-            Song currentSong = SongHandler.getInstance().currentSong;
+            Song currentSong = SongHandler.instance.currentSong;
             boolean looping = currentSong.looping;
             currentSong.looping ^= true;
             currentSong.loopCount = 0;

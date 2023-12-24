@@ -2,7 +2,7 @@ package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.mixin.ClientPlayNetworkHandlerAccessor;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.playing.Stage;
+import com.github.hhhzzzsss.songplayer.playing.StageBuilder;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.OtherClientPlayerEntity;
@@ -44,17 +44,12 @@ public class FakePlayerEntity extends OtherClientPlayerEntity {
 		world.addEntity(this);
 	}
 	
-	public void resetPlayerPosition() {
-		player.refreshPositionAndAngles(getX(), getY(), getZ(), getYaw(), getPitch());
-	}
-	
 	public void copyStagePosAndPlayerLook() {
-		Stage stage = SongHandler.getInstance().stage;
-		if (stage != null) {
-			refreshPositionAndAngles(stage.position.getX()+0.5, stage.position.getY(), stage.position.getZ()+0.5, player.getYaw(), player.getPitch());
+		StageBuilder stageBuilder = SongHandler.instance.stageBuilder;
+		if (stageBuilder != null) {
+			refreshPositionAndAngles(stageBuilder.position.getX()+0.5, stageBuilder.position.getY(), stageBuilder.position.getZ()+0.5, player.getYaw(), player.getPitch());
 			headYaw = player.headYaw;
-		}
-		else {
+		} else {
 			copyPositionAndRotation(player);
 		}
 	}

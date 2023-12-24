@@ -24,7 +24,7 @@ class GotoCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.then(ClientCommandManager.argument("time", StringArgumentType.word()).executes(context -> {
-            if (SongHandler.getInstance().currentSong == null) {
+            if (SongHandler.instance.currentSong == null) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
@@ -33,7 +33,7 @@ class GotoCommand extends Command {
 
             try {
                 long time = Util.parseTime(timeString);
-                SongHandler.getInstance().currentSong.setTime(time);
+                SongHandler.instance.currentSong.setTime(time);
                 SongPlayer.addChatMessage("§6Set song time to §3" + Util.formatTime(time));
             } catch (IOException e) {
                 SongPlayer.addChatMessage("§cNot a valid time stamp");

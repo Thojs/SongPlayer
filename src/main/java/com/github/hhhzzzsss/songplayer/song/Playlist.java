@@ -42,7 +42,8 @@ public class Playlist {
             songFiles = index.stream()
                     .map(directory::resolve)
                     .collect(Collectors.toList());
-            (new PlaylistLoaderThread()).start();
+
+            new PlaylistLoaderThread().start();
         } else {
             ordering = new ArrayList<>();
             loaded = true;
