@@ -38,7 +38,6 @@ public class SongItemCreatorThread extends SongLoaderThread {
             ItemStack newStack;
             if (stack.isEmpty()) {
                 newStack = Items.PAPER.getDefaultStack();
-                newStack.getOrCreateNbt().putInt("CustomModelData", 751642938);
             } else {
                 newStack = stack.copy();
             }

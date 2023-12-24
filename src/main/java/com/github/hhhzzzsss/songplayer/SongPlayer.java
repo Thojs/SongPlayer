@@ -5,6 +5,7 @@ import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
 import com.github.hhhzzzsss.songplayer.conversion.MidiParser;
 import com.github.hhhzzzsss.songplayer.conversion.NBSParser;
 import com.github.hhhzzzsss.songplayer.conversion.SPParser;
+import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
 import com.github.hhhzzzsss.songplayer.stage.DefaultStage;
 import com.github.hhhzzzsss.songplayer.stage.SphericalStage;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
@@ -15,10 +16,12 @@ import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallba
 import net.minecraft.block.Block;
 import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.entity.Entity;
+import net.minecraft.item.Items;
 import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class SongPlayer implements ModInitializer {
@@ -32,15 +35,13 @@ public class SongPlayer implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		if (!Files.exists(SONG_DIR)) {
-			Util.createDirectoriesSilently(SONG_DIR);
-		}
-		if (!Files.exists(SONGPLAYER_DIR)) {
-			Util.createDirectoriesSilently(SONGPLAYER_DIR);
-		}
-		if (!Files.exists(PLAYLISTS_DIR)) {
-			Util.createDirectoriesSilently(PLAYLISTS_DIR);
-		}
+		// Create directories.
+		Util.createDirectoriesSilently(SONG_DIR);
+		Util.createDirectoriesSilently(SONGPLAYER_DIR);
+		Util.createDirectoriesSilently(PLAYLISTS_DIR);
+
+		// Custom predicate for song item.
+		ModelPredicateProviderRegistry.register(Items.PAPER, new Identifier("song_item"), (itemStack, clientWorld, livingEntity, seed) -> SongItemUtils.isSongItem(itemStack) ? 1F : 0F);
 
 		// Register StageTypes
 		StageTypeRegistry.instance.registerStageTypes(
