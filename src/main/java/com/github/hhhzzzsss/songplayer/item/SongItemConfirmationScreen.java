@@ -2,6 +2,7 @@ package com.github.hhhzzzsss.songplayer.item;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
+import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.client.font.MultilineText;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
@@ -66,7 +67,7 @@ public class SongItemConfirmationScreen extends Screen {
                 String[] loadedMessages = {
                         "§3" + loaderThread.song.name,
                         "",
-                        String.format("§7Size: %.2f%s", loaderThread.songData.length / 1024f, "MB"),
+                        String.format("§7Size: %s", Util.humanReadableByteCountSI(loaderThread.songData.length)),
                         String.format("§7Max notes per second: %s%d", getNumberColor(loaderThread.maxNotesPerSecond), loaderThread.maxNotesPerSecond),
                         String.format("§7Avg notes per second: %s%.2f", getNumberColor(loaderThread.avgNotesPerSecond), loaderThread.avgNotesPerSecond),
                 };
