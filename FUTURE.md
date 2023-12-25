@@ -6,3 +6,4 @@
 - Translations
 - Decrease suggestion length of big paths.
 - Kotlin?
+- Playlist functionality.

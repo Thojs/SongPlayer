@@ -17,6 +17,8 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 
 public class Util {
+    private Util() {}
+
     public static void createDirectoriesSilently(Path path) {
         try {
             Files.createDirectories(path);

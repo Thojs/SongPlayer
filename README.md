@@ -63,30 +63,6 @@ Gets the status of the current song that is playing.
 
 Shows all the songs in the queue.
 
-
-[//]: # (Playlist function is not really important, I don't use it on a regular basis.)
-
-[//]: # (### playlist play \<playlist>)
-
-[//]: # (### playlist create \<playlist>)
-
-[//]: # (### playlist list \[\<playlist>])
-
-[//]: # (### playlist delete \<playlist> \<song>)
-
-[//]: # (### playlist addSong \<playlist> \<song>)
-
-[//]: # (### playlist removeSong \<playlist> \<song>)
-
-[//]: # (### playlist renameSong \<playlist> \<old name> \<new name>)
-
-[//]: # (### playlist loop)
-
-[//]: # (### playlist shuffle)
-
-[//]: # ()
-[//]: # (Create, edit, delete, or play playlists. You can also toggle looping or shuffling.)
-
 ### songs (subdirectory)
 
 If no arguments are given, lists songs in the `songs` folder. Otherwise, lists songs in the specified subdirectory.
@@ -115,16 +91,16 @@ Sets the type of noteblock stage to build. Thanks Sk8kman and Lizard16 for the s
 
 Toggles whether you swing your arm when hitting a noteblock and rotate to look at the noteblocks you are hitting.
 
-### announcement \<enable | disable | getMessage>
-### announcement setMessage
+### announcement \<enable | disable | get>
+### announcement set
 
 Set an announcement message that is sent when you start playing a song.
 With setMessage, write `[name]` where the song name should go.
 
-Example: `$announcement setMessage &6Now playing: &3[name]`
+Example: `/sp announcement set &6Now playing: &3[name]`
 
-### songItem create \<song or url>
-### songItem setSongName \<name>
+### item create \<song or url>
+### item setname \<name>
 
 Encodes song data into an item. When you right-click on such an item, SongPlayer will automatically detect that it is a song item and ask if you want to play it. These items, once created, can be used by anyone that is using the necessary version of SongPlayer.
 

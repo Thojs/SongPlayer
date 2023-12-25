@@ -33,39 +33,18 @@ public class SongHandler {
     public SongLoaderThread loaderThread = null;
     public LinkedList<Song> songQueue = new LinkedList<>();
     public Song currentSong = null;
-    public Playlist currentPlaylist = null;
     public StageBuilder stageBuilder = null;
     public boolean building = false;
 
     public boolean wasFlying = false;
     public GameMode originalGamemode = GameMode.CREATIVE;
-
-    boolean playlistChecked = false;
+    private ItemStack prevHeldItem = null;
 
     public void onUpdate(boolean tick) {
         // Check current playlist and load song from it if necessary
-        if (currentSong == null && currentPlaylist != null && currentPlaylist.loaded) {
-            if (!playlistChecked) {
-                playlistChecked = true;
-                if (!currentPlaylist.songsFailedToLoad.isEmpty()) {
-                    SongPlayer.addChatMessage("§cFailed to load the following songs from the playlist: §4" + String.join(" ", currentPlaylist.songsFailedToLoad));
-                }
-            }
-            Song nextSong = currentPlaylist.getNext();
-            if (currentPlaylist.songs.isEmpty()) {
-                SongPlayer.addChatMessage("§cPlaylist has no playable songs");
-                currentPlaylist = null;
-            } else if (nextSong == null) {
-                SongPlayer.addChatMessage("§6Playlist has finished playing");
-                currentPlaylist = null;
-            } else {
-                nextSong.reset();
-                setSong(nextSong);
-            }
-        }
 
         // Check queue and load song from it if necessary
-        if (currentSong == null && currentPlaylist == null && !songQueue.isEmpty()) {
+        if (currentSong == null && !songQueue.isEmpty()) {
             setSong(songQueue.poll());
         }
 
@@ -93,9 +72,8 @@ public class SongHandler {
             } else {
                 originalGamemode = SongPlayer.MC.interactionManager.getCurrentGameMode();
             }
-        }
-        // Otherwise, handle song playing
-        else {
+        } else {
+            // Otherwise, handle song playing
             if (stageBuilder == null) {
                 stageBuilder = new StageBuilder();
                 stageBuilder.movePlayerToStagePosition();
@@ -128,29 +106,25 @@ public class SongHandler {
     public void loadSong(String location) {
         if (loaderThread != null) {
             SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
+            return;
         }
-        else if (currentPlaylist != null) {
-            SongPlayer.addChatMessage("§cCannot load a song while a playlist is playing");
-        }
-        else {
-            try {
-                loaderThread = new SongLoaderThread(location);
-                SongPlayer.addChatMessage("§6Loading §3" + location);
-                loaderThread.start();
-            } catch (IOException e) {
-                SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
-            }
+
+        try {
+            loaderThread = new SongLoaderThread(location);
+            SongPlayer.addChatMessage("§6Loading §3" + location);
+            loaderThread.start();
+        } catch (IOException e) {
+            SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
         }
     }
 
     public void loadSong(SongLoaderThread thread) {
         if (loaderThread != null) {
             SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
-        } else if (currentPlaylist != null) {
-            SongPlayer.addChatMessage("§cCannot load a song while a playlist is playing");
-        } else {
-            loaderThread = thread;
+            return;
         }
+
+        loaderThread = thread;
     }
 
     public void setSong(Song song) {
@@ -158,7 +132,7 @@ public class SongHandler {
         building = true;
         setCreativeIfNeeded();
         if (Config.getConfig().doAnnouncement) {
-            sendMessage(Config.getConfig().announcementMessage.replaceAll("\\[name\\]", song.name));
+            sendMessage(Config.getConfig().announcementMessage.replaceAll("\\[name]", song.name));
         }
 
         if (stageBuilder == null) {
@@ -167,9 +141,9 @@ public class SongHandler {
         } else {
             stageBuilder.sendMovementPacketToStagePosition();
         }
+
         getAndSaveBuildSlot();
         SongPlayer.addChatMessage("§6Building noteblocks");
-
     }
 
     private void queueSong(Song song) {
@@ -180,19 +154,14 @@ public class SongHandler {
     // Runs every tick
     private int buildStartDelay = 0;
     private int buildEndDelay = 0;
-    private int buildCooldown = 0;
     private int buildSlot = -1;
-    private ItemStack prevHeldItem = null;
     private void handleBuilding() {
         setBuildProgressDisplay();
         if (buildStartDelay > 0) {
             buildStartDelay--;
             return;
         }
-        if (buildCooldown > 0) {
-            buildCooldown--;
-            return;
-        }
+
         ClientWorld world = SongPlayer.MC.world;
         if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
             return;
@@ -245,18 +214,6 @@ public class SongHandler {
                 .append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
                 .append(Text.literal((stageBuilder.totalMissingNotes - stageBuilder.missingNotes.size()) + "/" + stageBuilder.totalMissingNotes).formatted(Formatting.DARK_AQUA));
         MutableText playlistText = Text.empty();
-        if (currentPlaylist != null && currentPlaylist.loaded) {
-            playlistText = playlistText.append(Text.literal("Playlist: ").formatted(Formatting.GOLD))
-                    .append(Text.literal(currentPlaylist.name).formatted(Formatting.BLUE))
-                    .append(Text.literal(" | ").formatted(Formatting.GOLD))
-                    .append(Text.literal(String.format(" (%s/%s)", currentPlaylist.songNumber, currentPlaylist.songs.size())).formatted(Formatting.DARK_AQUA));
-            if (currentPlaylist.loop) {
-                playlistText.append(Text.literal(" | Looping").formatted(Formatting.GOLD));
-            }
-            if (currentPlaylist.shuffle) {
-                playlistText.append(Text.literal(" | Shuffled").formatted(Formatting.GOLD));
-            }
-        }
         ProgressDisplay.instance.setText(buildText, playlistText);
     }
 
@@ -329,24 +286,11 @@ public class SongHandler {
             }
         }
         MutableText playlistText = Text.empty();
-        if (currentPlaylist != null && currentPlaylist.loaded) {
-            playlistText = playlistText.append(Text.literal("Playlist: ").formatted(Formatting.GOLD))
-                    .append(Text.literal(currentPlaylist.name).formatted(Formatting.BLUE))
-                    .append(Text.literal(" | ").formatted(Formatting.GOLD))
-                    .append(Text.literal(String.format(" (%s/%s)", currentPlaylist.songNumber, currentPlaylist.songs.size())).formatted(Formatting.DARK_AQUA));
-            if (currentPlaylist.loop) {
-                playlistText.append(Text.literal(" | Looping").formatted(Formatting.GOLD));
-            }
-            if (currentPlaylist.shuffle) {
-                playlistText.append(Text.literal(" | Shuffled").formatted(Formatting.GOLD));
-            }
-        }
         ProgressDisplay.instance.setText(songText, playlistText);
     }
 
     public void cleanup() {
         currentSong = null;
-        currentPlaylist = null;
         songQueue.clear();
         stageBuilder = null;
         buildSlot = -1;
@@ -354,30 +298,23 @@ public class SongHandler {
     }
 
     public void restoreStateAndCleanUp() {
-        if (stageBuilder != null) {
-            stageBuilder.movePlayerToStagePosition();
-        }
+        if (stageBuilder != null) stageBuilder.movePlayerToStagePosition();
         if (originalGamemode != SongPlayer.MC.interactionManager.getCurrentGameMode()) {
             if (originalGamemode == GameMode.CREATIVE) {
-                sendGamemodeCommand(Config.getConfig().creativeCommand);
+                setCreativeIfNeeded();
             }
             else if (originalGamemode == GameMode.SURVIVAL) {
-                sendGamemodeCommand(Config.getConfig().survivalCommand);
+                setSurvivalIfNeeded();
             }
         }
         restoreBuildSlot();
         cleanup();
     }
 
-    public void onNotIngame() {
-        currentSong = null;
-        currentPlaylist = null;
-        songQueue.clear();
-    }
-
     private long lastCommandTime = System.currentTimeMillis();
     private String cachedCommand = null;
     private String cachedMessage = null;
+
     private void sendGamemodeCommand(String command) {
         cachedCommand = command;
     }
@@ -404,35 +341,35 @@ public class SongHandler {
     }
 
     private void setCreativeIfNeeded() {
-        cachedCommand = null;
         if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
             sendGamemodeCommand(Config.getConfig().creativeCommand);
         }
     }
     private void setSurvivalIfNeeded() {
-        cachedCommand = null;
         if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
             sendGamemodeCommand(Config.getConfig().survivalCommand);
         }
     }
 
-    private final String[] instrumentNames = {"harp", "basedrum", "snare", "hat", "bass", "flute", "bell", "guitar", "chime", "xylophone", "iron_xylophone", "cow_bell", "didgeridoo", "bit", "banjo", "pling"};
-
     private void holdNoteblock(int id, int slot) {
         PlayerInventory inventory = SongPlayer.MC.player.getInventory();
         inventory.selectedSlot = slot;
         ((ClientPlayerInteractionManagerAccessor) SongPlayer.MC.interactionManager).invokeSyncSelectedSlot();
-        int instrument = id/25;
+        String instrument = Instrument.getInstrumentFromId(id/25).instrumentName;
         int note = id%25;
+
         NbtCompound nbt = new NbtCompound();
         nbt.putString("id", "minecraft:note_block");
         nbt.putByte("Count", (byte) 1);
+
         NbtCompound tag = new NbtCompound();
         NbtCompound bsTag = new NbtCompound();
-        bsTag.putString("instrument", instrumentNames[instrument]);
+        bsTag.putString("instrument", instrument);
         bsTag.putString("note", Integer.toString(note));
+
         tag.put("BlockStateTag", bsTag);
         nbt.put("tag", tag);
+
         ItemStack noteblockStack = ItemStack.fromNbt(nbt);
         inventory.main.set(slot, noteblockStack);
         SongPlayer.MC.interactionManager.clickCreativeStack(noteblockStack, 36 + slot);

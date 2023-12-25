@@ -14,7 +14,6 @@ public class SongPlayerCommand {
             new GotoCommand(),
             new LoopCommand(),
             new PlayCommand(),
-            //todo playlist cmd
             new QueueCommand(),
             new SetCommandsCommand(),
             new StageTypeCommand(),

@@ -34,7 +34,7 @@ public class MinecraftClientMixin {
 		if (SongPlayer.MC.world != null && SongPlayer.MC.player != null && SongPlayer.MC.interactionManager != null) {
 			SongHandler.instance.onUpdate(false);
 		} else {
-			SongHandler.instance.onNotIngame();
+			SongHandler.instance.cleanup();
 		}
 	}
 

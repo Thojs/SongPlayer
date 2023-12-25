@@ -20,7 +20,7 @@ import static com.github.hhhzzzsss.songplayer.SongPlayer.MC;
 class SongItemCommand extends Command {
     @Override
     public String getName() {
-        return "songItem";
+        return "item";
     }
 
     @Override
