@@ -20,7 +20,7 @@ public class InGameHudMixin {
     @Shadow
     private int heldItemTooltipFade;
 
-    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V", ordinal = 3))
+    @Inject(method = "render", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;enableBlend()V", remap = false))
     private void onRender(DrawContext context, float tickDelta, CallbackInfo ci) {
         ProgressDisplay.instance.onRenderHUD(context, scaledWidth, scaledHeight, heldItemTooltipFade);
     }
