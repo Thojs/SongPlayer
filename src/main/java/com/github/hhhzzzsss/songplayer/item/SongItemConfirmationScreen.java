@@ -1,7 +1,6 @@
 package com.github.hhhzzzsss.songplayer.item;
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
+import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.client.font.MultilineText;
 import net.minecraft.client.gui.DrawContext;
@@ -41,7 +40,7 @@ public class SongItemConfirmationScreen extends Screen {
         int centerX = this.width / 2;
 
         this.addDrawableChild(ButtonWidget.builder(CONFIRM, button -> {
-            SongHandler.instance.loadSong(loaderThread);
+            SongPlayer.instance.loadSong(loaderThread);
             this.client.setScreen(null);
         }).dimensions(centerX - 105, y, 100, 20).build());
 
@@ -58,7 +57,7 @@ public class SongItemConfirmationScreen extends Screen {
 
         if (!loaderThread.isAlive()) {
             if (loaderThread.exception != null) {
-                SongPlayer.addChatMessage("§cError loading song item: §4" + loaderThread.exception.getMessage());
+                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cError loading song item: §4" + loaderThread.exception.getMessage());
                 this.client.setScreen(null);
                 return;
             }
