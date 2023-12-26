@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.github.hhhzzzsss.songplayer.song.Note;
 import com.github.hhhzzzsss.songplayer.song.Song;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -25,7 +25,7 @@ class TestSongCommand extends Command {
                 song.add(new Note(i, i*50));
             }
             song.length = 400*50;
-            SongPlayer.instance.setSong(song);
+            NotePlayer.instance.setSong(song);
 
             return 1;
         });

@@ -2,6 +2,7 @@ package com.github.hhhzzzsss.songplayer.playing;
 
 import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.FakePlayerEntity;
+import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.github.hhhzzzsss.songplayer.mixin.ClientPlayerInteractionManagerAccessor;
 import com.github.hhhzzzsss.songplayer.song.*;
@@ -25,9 +26,8 @@ import net.minecraft.world.GameMode;
 import java.io.IOException;
 import java.util.LinkedList;
 
-public class SongPlayer {
-    public static final SongPlayer instance = new SongPlayer();
-    private SongPlayer() {}
+public class NotePlayer {
+    public static final NotePlayer instance = new NotePlayer();
 
     public SongLoaderThread loaderThread = null;
     public LinkedList<Song> songQueue = new LinkedList<>();
@@ -50,7 +50,7 @@ public class SongPlayer {
         // Check if loader thread is finished and handle accordingly
         if (loaderThread != null && !loaderThread.isAlive()) {
             if (loaderThread.exception != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cFailed to load song: §4" + loaderThread.exception.getMessage());
+                SongPlayer.addChatMessage("§cFailed to load song: §4" + loaderThread.exception.getMessage());
             } else {
                 if (currentSong == null) {
                     setSong(loaderThread.song);
@@ -66,10 +66,10 @@ public class SongPlayer {
 
         // Check if no song is playing and, if necessary, handle cleanup
         if (currentSong == null) {
-            if (stageBuilder != null || com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer != null) {
+            if (stageBuilder != null || SongPlayer.fakePlayer != null) {
                 restoreStateAndCleanUp();
             } else {
-                originalGamemode = com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode();
+                originalGamemode = SongPlayer.MC.interactionManager.getCurrentGameMode();
             }
         } else {
             // Otherwise, handle song playing
@@ -78,21 +78,21 @@ public class SongPlayer {
                 stageBuilder.movePlayerToStagePosition();
             }
 
-            if (Config.getConfig().showFakePlayer && com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer == null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer = new FakePlayerEntity();
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
+            if (Config.getConfig().showFakePlayer && SongPlayer.fakePlayer == null) {
+                SongPlayer.fakePlayer = new FakePlayerEntity();
+                SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
             }
 
-            if (!Config.getConfig().showFakePlayer && com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.removeFakePlayer();
+            if (!Config.getConfig().showFakePlayer && SongPlayer.fakePlayer != null) {
+                SongPlayer.removeFakePlayer();
             }
 
-            if (com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.getInventory().clone(com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getInventory());
+            if (SongPlayer.fakePlayer != null) {
+                SongPlayer.fakePlayer.getInventory().clone(SongPlayer.MC.player.getInventory());
             }
 
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getAbilities().allowFlying = true;
-            wasFlying = com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getAbilities().flying;
+            SongPlayer.MC.player.getAbilities().allowFlying = true;
+            wasFlying = SongPlayer.MC.player.getAbilities().flying;
 
             if (building) {
                 if (tick) handleBuilding();
@@ -104,22 +104,22 @@ public class SongPlayer {
 
     public void loadSong(String location) {
         if (loaderThread != null) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
+            SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
             return;
         }
 
         try {
             loaderThread = new SongLoaderThread(location);
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Loading §3" + location);
+            SongPlayer.addChatMessage("§6Loading §3" + location);
             loaderThread.start();
         } catch (IOException e) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
+            SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
         }
     }
 
     public void loadSong(SongLoaderThread thread) {
         if (loaderThread != null) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
+            SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
             return;
         }
 
@@ -142,12 +142,12 @@ public class SongPlayer {
         }
 
         getAndSaveBuildSlot();
-        com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Building noteblocks");
+        SongPlayer.addChatMessage("§6Building noteblocks");
     }
 
     private void queueSong(Song song) {
         songQueue.add(song);
-        com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Added song to queue: §3" + song.name);
+        SongPlayer.addChatMessage("§6Added song to queue: §3" + song.name);
     }
 
     // Runs every tick
@@ -155,14 +155,14 @@ public class SongPlayer {
     private int buildEndDelay = 0;
     private int buildSlot = -1;
     private void handleBuilding() {
-        setBuildProgressDisplay();
+        stageBuilder.setBuildProgressDisplay();
         if (buildStartDelay > 0) {
             buildStartDelay--;
             return;
         }
 
-        ClientWorld world = com.github.hhhzzzsss.songplayer.SongPlayer.MC.world;
-        if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
+        ClientWorld world = SongPlayer.MC.world;
+        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
             return;
         }
 
@@ -190,7 +190,7 @@ public class SongPlayer {
                 return;
             }
             int blockId = Block.getRawIdFromState(world.getBlockState(bp));
-            int currentNoteId = (blockId- com.github.hhhzzzsss.songplayer.SongPlayer.NOTEBLOCK_BASE_ID)/2;
+            int currentNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
             if (currentNoteId != desiredNoteId) {
                 holdNoteblock(desiredNoteId, buildSlot);
                 if (blockId != 0) {
@@ -204,23 +204,15 @@ public class SongPlayer {
             building = false;
             setSurvivalIfNeeded();
             stageBuilder.sendMovementPacketToStagePosition();
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Now playing §3" + currentSong.name);
+            SongPlayer.addChatMessage("§6Now playing §3" + currentSong.name);
         }
     }
 
-    private void setBuildProgressDisplay() {
-        MutableText buildText = Text.empty()
-                .append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
-                .append(Text.literal((stageBuilder.totalMissingNotes - stageBuilder.missingNotes.size()) + "/" + stageBuilder.totalMissingNotes).formatted(Formatting.DARK_AQUA));
-        MutableText playlistText = Text.empty();
-        ProgressDisplay.instance.setText(buildText, playlistText);
-    }
-
     // Runs every frame
-    private void handlePlaying(boolean tick) {
+    void handlePlaying(boolean tick) {
         if (tick) setPlayProgressDisplay();
 
-        if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
+        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
             currentSong.pause();
             return;
         }
@@ -242,7 +234,7 @@ public class SongPlayer {
                     System.out.println("Missing note: " + Instrument.getInstrumentFromId(instrumentId).name() + ":" + pitch);
                 }
                 getAndSaveBuildSlot();
-                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Stage was altered. Rebuilding!");
+                SongPlayer.addChatMessage("§6Stage was altered. Rebuilding!");
                 return;
             }
         }
@@ -264,7 +256,7 @@ public class SongPlayer {
         }
 
         if (currentSong.finished()) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Done playing §3" + currentSong.name);
+            SongPlayer.addChatMessage("§6Done playing §3" + currentSong.name);
             currentSong = null;
         }
     }
@@ -293,12 +285,12 @@ public class SongPlayer {
         songQueue.clear();
         stageBuilder = null;
         buildSlot = -1;
-        com.github.hhhzzzsss.songplayer.SongPlayer.removeFakePlayer();
+        SongPlayer.removeFakePlayer();
     }
 
     public void restoreStateAndCleanUp() {
         if (stageBuilder != null) stageBuilder.movePlayerToStagePosition();
-        if (originalGamemode != com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode()) {
+        if (originalGamemode != SongPlayer.MC.interactionManager.getCurrentGameMode()) {
             if (originalGamemode == GameMode.CREATIVE) {
                 setCreativeIfNeeded();
             }
@@ -323,16 +315,16 @@ public class SongPlayer {
     private void checkCommandCache() {
         long currentTime = System.currentTimeMillis();
         if (currentTime >= lastCommandTime + 1500 && cachedCommand != null) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.getNetworkHandler().sendCommand(cachedCommand);
+            SongPlayer.MC.getNetworkHandler().sendCommand(cachedCommand);
             cachedCommand = null;
             lastCommandTime = currentTime;
         }
         else if (currentTime >= lastCommandTime + 500 && cachedMessage != null) {
             if (cachedMessage.startsWith("/")) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.MC.getNetworkHandler().sendCommand(cachedMessage.substring(1));
+                SongPlayer.MC.getNetworkHandler().sendCommand(cachedMessage.substring(1));
             }
             else {
-                com.github.hhhzzzsss.songplayer.SongPlayer.MC.getNetworkHandler().sendChatMessage(cachedMessage);
+                SongPlayer.MC.getNetworkHandler().sendChatMessage(cachedMessage);
             }
             cachedMessage = null;
             lastCommandTime = currentTime;
@@ -340,20 +332,20 @@ public class SongPlayer {
     }
 
     private void setCreativeIfNeeded() {
-        if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
+        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
             sendGamemodeCommand(Config.getConfig().creativeCommand);
         }
     }
     private void setSurvivalIfNeeded() {
-        if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
+        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
             sendGamemodeCommand(Config.getConfig().survivalCommand);
         }
     }
 
     private void holdNoteblock(int id, int slot) {
-        PlayerInventory inventory = com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getInventory();
+        PlayerInventory inventory = SongPlayer.MC.player.getInventory();
         inventory.selectedSlot = slot;
-        ((ClientPlayerInteractionManagerAccessor) com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager).invokeSyncSelectedSlot();
+        ((ClientPlayerInteractionManagerAccessor) SongPlayer.MC.interactionManager).invokeSyncSelectedSlot();
         String instrument = Instrument.getInstrumentFromId(id/25).instrumentName;
         int note = id%25;
 
@@ -371,7 +363,7 @@ public class SongPlayer {
 
         ItemStack noteblockStack = ItemStack.fromNbt(nbt);
         inventory.main.set(slot, noteblockStack);
-        com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.clickCreativeStack(noteblockStack, 36 + slot);
+        SongPlayer.MC.interactionManager.clickCreativeStack(noteblockStack, 36 + slot);
     }
 
     private void placeBlock(BlockPos bp) {
@@ -381,39 +373,39 @@ public class SongPlayer {
         fx += bp.getX();
         fy += bp.getY();
         fz += bp.getZ();
-        com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.interactBlock(com.github.hhhzzzsss.songplayer.SongPlayer.MC.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(fx, fy, fz), Direction.UP, bp, false));
+        SongPlayer.MC.interactionManager.interactBlock(SongPlayer.MC.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(fx, fy, fz), Direction.UP, bp, false));
         doMovements(fx, fy, fz);
     }
 
     private void attackBlock(BlockPos bp) {
-        com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.attackBlock(bp, Direction.UP);
+        SongPlayer.MC.interactionManager.attackBlock(bp, Direction.UP);
         doMovements(bp.getX() + 0.5, bp.getY() + 0.5, bp.getZ() + 0.5);
     }
 
     private void stopAttack() {
-        com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.cancelBlockBreaking();
+        SongPlayer.MC.interactionManager.cancelBlockBreaking();
     }
 
     private void doMovements(double lookX, double lookY, double lookZ) {
         if (Config.getConfig().swing) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.swingHand(Hand.MAIN_HAND);
-            if (com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.swingHand(Hand.MAIN_HAND);
+            SongPlayer.MC.player.swingHand(Hand.MAIN_HAND);
+            if (SongPlayer.fakePlayer != null) {
+                SongPlayer.fakePlayer.swingHand(Hand.MAIN_HAND);
             }
         }
         if (Config.getConfig().rotate) {
             double d = lookX - (stageBuilder.position.getX() + 0.5);
-            double e = lookY - (stageBuilder.position.getY() + com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getStandingEyeHeight());
+            double e = lookY - (stageBuilder.position.getY() + SongPlayer.MC.player.getStandingEyeHeight());
             double f = lookZ - (stageBuilder.position.getZ() + 0.5);
             double g = Math.sqrt(d * d + f * f);
             float pitch = MathHelper.wrapDegrees((float) (-(MathHelper.atan2(e, g) * 57.2957763671875)));
             float yaw = MathHelper.wrapDegrees((float) (MathHelper.atan2(f, d) * 57.2957763671875) - 90.0f);
-            if (com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.setPitch(pitch);
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.setYaw(yaw);
-                com.github.hhhzzzsss.songplayer.SongPlayer.fakePlayer.setHeadYaw(yaw);
+            if (SongPlayer.fakePlayer != null) {
+                SongPlayer.fakePlayer.setPitch(pitch);
+                SongPlayer.fakePlayer.setYaw(yaw);
+                SongPlayer.fakePlayer.setHeadYaw(yaw);
             }
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.networkHandler.getConnection().send(new PlayerMoveC2SPacket.Full(
+            SongPlayer.MC.player.networkHandler.getConnection().send(new PlayerMoveC2SPacket.Full(
                     stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5,
                     yaw, pitch,
                     true));
@@ -421,13 +413,13 @@ public class SongPlayer {
     }
 
     private void getAndSaveBuildSlot() {
-        buildSlot = com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getInventory().getSwappableHotbarSlot();
-        prevHeldItem = com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getInventory().getStack(buildSlot);
+        buildSlot = SongPlayer.MC.player.getInventory().getSwappableHotbarSlot();
+        prevHeldItem = SongPlayer.MC.player.getInventory().getStack(buildSlot);
     }
     private void restoreBuildSlot() {
         if (buildSlot != -1) {
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getInventory().setStack(buildSlot, prevHeldItem);
-            com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager.clickCreativeStack(prevHeldItem, 36 + buildSlot);
+            SongPlayer.MC.player.getInventory().setStack(buildSlot, prevHeldItem);
+            SongPlayer.MC.interactionManager.clickCreativeStack(prevHeldItem, 36 + buildSlot);
             buildSlot = -1;
         }
     }

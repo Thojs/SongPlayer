@@ -3,7 +3,7 @@ package com.github.hhhzzzsss.songplayer.mixin;
 import com.github.hhhzzzsss.songplayer.item.SongItemConfirmationScreen;
 import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
 import com.github.hhhzzzsss.songplayer.playing.ProgressDisplay;
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -31,16 +31,16 @@ public class MinecraftClientMixin {
 	@Inject(at = @At("HEAD"), method = "render(Z)V")
 	public void onRender(boolean tick, CallbackInfo ci) {
 		if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.world != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.player != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager != null) {
-			SongPlayer.instance.onUpdate(false);
+			NotePlayer.instance.onUpdate(false);
 		} else {
-			SongPlayer.instance.cleanup();
+			NotePlayer.instance.cleanup();
 		}
 	}
 
 	@Inject(at = @At("HEAD"), method = "tick()V")
 	public void onTick(CallbackInfo ci) {
 		if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.world != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.player != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager != null) {
-			SongPlayer.instance.onUpdate(true);
+			NotePlayer.instance.onUpdate(true);
 		}
 		ProgressDisplay.instance.onTick();
 	}

@@ -1,7 +1,7 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
 import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
@@ -24,7 +24,7 @@ class PlayCommand extends Command {
             .suggests(SuggestionUtil.safeSuggestions(SuggestionUtil::giveSongSuggestions))
             .executes(context -> {
                 String songLocation = context.getArgument("song", String.class);
-                SongPlayer.instance.loadSong(songLocation);
+                NotePlayer.instance.loadSong(songLocation);
 
                 return 1;
             })

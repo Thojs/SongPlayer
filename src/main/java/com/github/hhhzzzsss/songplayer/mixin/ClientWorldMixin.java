@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.mixin;
 
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.github.hhhzzzsss.songplayer.playing.StageBuilder;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.world.ClientWorld;
@@ -14,8 +14,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientWorldMixin {
     @Inject(at = @At("HEAD"), method = "handleBlockUpdate(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)V", cancellable = true)
     public void onHandleBlockUpdate(BlockPos pos, BlockState state, int flags, CallbackInfo ci) {
-        StageBuilder stageBuilder = SongPlayer.instance.stageBuilder;
-        if (state == null || SongPlayer.instance.building) return;
+        StageBuilder stageBuilder = NotePlayer.instance.stageBuilder;
+        if (state == null || NotePlayer.instance.building) return;
 
         for (BlockPos nbp : stageBuilder.noteblockPositions.values()) {
             if (!nbp.equals(pos)) continue;

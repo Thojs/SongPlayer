@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.item;
 
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.client.font.MultilineText;
 import net.minecraft.client.gui.DrawContext;
@@ -40,7 +40,7 @@ public class SongItemConfirmationScreen extends Screen {
         int centerX = this.width / 2;
 
         this.addDrawableChild(ButtonWidget.builder(CONFIRM, button -> {
-            SongPlayer.instance.loadSong(loaderThread);
+            NotePlayer.instance.loadSong(loaderThread);
             this.client.setScreen(null);
         }).dimensions(centerX - 105, y, 100, 20).build());
 

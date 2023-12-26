@@ -1,6 +1,6 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
-import com.github.hhhzzzsss.songplayer.playing.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.github.hhhzzzsss.songplayer.song.Song;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -19,12 +19,12 @@ class LoopCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            if (SongPlayer.instance.currentSong == null) {
+            if (NotePlayer.instance.currentSong == null) {
                 com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
-            Song currentSong = SongPlayer.instance.currentSong;
+            Song currentSong = NotePlayer.instance.currentSong;
             boolean looping = currentSong.looping;
             currentSong.looping ^= true;
             currentSong.loopCount = 0;
