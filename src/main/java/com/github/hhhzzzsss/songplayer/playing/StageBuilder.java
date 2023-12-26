@@ -2,6 +2,8 @@ package com.github.hhhzzzsss.songplayer.playing;
 
 import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.mixin.ClientPlayerInteractionManagerAccessor;
+import com.github.hhhzzzsss.songplayer.song.Instrument;
 import com.github.hhhzzzsss.songplayer.song.Song;
 import com.github.hhhzzzsss.songplayer.stage.StageType;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
@@ -9,28 +11,104 @@ import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.player.PlayerInventory;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.GameMode;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
 public class StageBuilder {
-	private final ClientPlayerEntity player = SongPlayer.MC.player;
+	public boolean isBuilding = false;
 	
-	public BlockPos position;
+	public BlockPos position = null;
 	public HashMap<Integer, BlockPos> noteblockPositions = new HashMap<>();
 
 	public LinkedList<BlockPos> requiredBreaks = new LinkedList<>();
 	public TreeSet<Integer> missingNotes = new TreeSet<>();
 	public int totalMissingNotes = 0;
-	
-	public StageBuilder() {
-		position = player.getBlockPos();
+
+	private final SongHandler handler;
+
+	public StageBuilder(SongHandler handler) {
+		this.handler = handler;
+	}
+
+	int buildStartDelay = 0;
+	int buildEndDelay = 0;
+
+	public void handleBuilding(boolean tick) {
+		if (!tick) return;
+
+		setBuildProgressDisplay();
+
+		if (buildStartDelay > 0) {
+			buildStartDelay--;
+			return;
+		}
+
+		ClientWorld world = SongPlayer.MC.world;
+		if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) return;
+
+		if (nothingToBuild()) {
+			if (buildEndDelay > 0) {
+				buildEndDelay--;
+				return;
+			} else {
+				checkBuildStatus(handler.loadedSong);
+				sendMovementPacketToStagePosition();
+			}
+		}
+
+		if (!requiredBreaks.isEmpty()) {
+			for (int i=0; i<5; i++) {
+				if (requiredBreaks.isEmpty()) break;
+				BlockPos bp = requiredBreaks.poll();
+				handler.attackBlock(bp);
+			}
+			buildEndDelay = 20;
+		} else if (!missingNotes.isEmpty()) {
+			int desiredNoteId = missingNotes.pollFirst();
+			BlockPos bp = noteblockPositions.get(desiredNoteId);
+			if (bp == null) return;
+			int blockId = Block.getRawIdFromState(world.getBlockState(bp));
+			int currentNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
+			if (currentNoteId != desiredNoteId) {
+				holdNoteblock(desiredNoteId, buildSlot);
+				if (blockId != 0) {
+					handler.attackBlock(bp);
+				}
+				handler.placeBlock(bp);
+			}
+			buildEndDelay = 20;
+		} else { // Switch to playing
+			restoreBuildSlot();
+			isBuilding = false;
+			handler.setSurvivalIfNeeded();
+			sendMovementPacketToStagePosition();
+			SongPlayer.addChatMessage("§6Now playing §3" + handler.loadedSong.name);
+		}
+	}
+
+	private void setBuildProgressDisplay() {
+		MutableText buildText = Text.empty()
+				.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
+				.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
+		MutableText playlistText = Text.empty();
+		ProgressDisplay.instance.setText(buildText, playlistText);
 	}
 	
 	public void movePlayerToStagePosition() {
+		if (position == null) return;
+		ClientPlayerEntity player = SongPlayer.MC.player;
 		player.getAbilities().allowFlying = true;
 		player.getAbilities().flying = true;
 		player.refreshPositionAndAngles(position.getX() + 0.5, position.getY() + 0.0, position.getZ() + 0.5, player.getYaw(), player.getPitch());
@@ -199,5 +277,46 @@ public class StageBuilder {
 		double a_angle = Math.atan2(a_dz, a_dx);
 		double b_angle = Math.atan2(b_dz, b_dx);
         return Double.compare(a_angle, b_angle);
+	}
+
+	// Build slot
+	private ItemStack prevHeldItem = null;
+	int buildSlot = -1;
+
+	void getAndSaveBuildSlot() {
+		buildSlot = SongPlayer.MC.player.getInventory().getSwappableHotbarSlot();
+		prevHeldItem = SongPlayer.MC.player.getInventory().getStack(buildSlot);
+	}
+
+	void restoreBuildSlot() {
+		if (buildSlot != -1) {
+			SongPlayer.MC.player.getInventory().setStack(buildSlot, prevHeldItem);
+			SongPlayer.MC.interactionManager.clickCreativeStack(prevHeldItem, 36 + buildSlot);
+			buildSlot = -1;
+		}
+	}
+
+	private void holdNoteblock(int id, int slot) {
+		PlayerInventory inventory = SongPlayer.MC.player.getInventory();
+		inventory.selectedSlot = slot;
+		((ClientPlayerInteractionManagerAccessor) SongPlayer.MC.interactionManager).invokeSyncSelectedSlot();
+		String instrument = Instrument.getInstrumentFromId(id/25).instrumentName;
+		int note = id%25;
+
+		NbtCompound nbt = new NbtCompound();
+		nbt.putString("id", "minecraft:note_block");
+		nbt.putByte("Count", (byte) 1);
+
+		NbtCompound tag = new NbtCompound();
+		NbtCompound bsTag = new NbtCompound();
+		bsTag.putString("instrument", instrument);
+		bsTag.putString("note", Integer.toString(note));
+
+		tag.put("BlockStateTag", bsTag);
+		nbt.put("tag", tag);
+
+		ItemStack noteblockStack = ItemStack.fromNbt(nbt);
+		inventory.main.set(slot, noteblockStack);
+		SongPlayer.MC.interactionManager.clickCreativeStack(noteblockStack, 36 + slot);
 	}
 }

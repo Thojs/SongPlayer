@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
-import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
+import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
 
@@ -17,20 +18,20 @@ class StopCommand extends Command {
 
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        NotePlayer instance = NotePlayer.instance;
+        SongHandler instance = SongHandler.instance;
 
         node.executes(context -> {
-            if (instance.currentSong == null && instance.songQueue.isEmpty()) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6No song is currently playing");
+            if (instance.loadedSong == null && instance.songQueue.isEmpty()) {
+                SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
-            if (instance.stageBuilder != null) {
+            if (instance.stageBuilder.position != null) {
                 instance.stageBuilder.movePlayerToStagePosition();
             }
 
             instance.restoreStateAndCleanUp();
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6Stopped playing");
+            SongPlayer.addChatMessage("§6Stopped playing");
 
             return 1;
         });

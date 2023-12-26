@@ -1,12 +1,14 @@
 package com.github.hhhzzzsss.songplayer.item;
 
-import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
+import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.client.font.MultilineText;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.item.ItemStack;
+import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 
 import java.io.IOException;
@@ -21,7 +23,7 @@ public class SongItemConfirmationScreen extends Screen {
     private boolean loaded = false;
 
     private static final Text CONFIRM = Text.literal("Play");
-    private static final Text CANCEL = Text.literal("Cancel");
+    private static final Text CANCEL = ScreenTexts.CANCEL;
 
     public SongItemConfirmationScreen(ItemStack stack) throws IOException, IllegalArgumentException {
         super(Text.literal("Use song item"));
@@ -40,7 +42,7 @@ public class SongItemConfirmationScreen extends Screen {
         int centerX = this.width / 2;
 
         this.addDrawableChild(ButtonWidget.builder(CONFIRM, button -> {
-            NotePlayer.instance.loadSong(loaderThread);
+            SongHandler.instance.songQueue.loadSong(loaderThread);
             this.client.setScreen(null);
         }).dimensions(centerX - 105, y, 100, 20).build());
 
@@ -57,7 +59,7 @@ public class SongItemConfirmationScreen extends Screen {
 
         if (!loaderThread.isAlive()) {
             if (loaderThread.exception != null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cError loading song item: §4" + loaderThread.exception.getMessage());
+                SongPlayer.addChatMessage("§cError loading song item: §4" + loaderThread.exception.getMessage());
                 this.client.setScreen(null);
                 return;
             }

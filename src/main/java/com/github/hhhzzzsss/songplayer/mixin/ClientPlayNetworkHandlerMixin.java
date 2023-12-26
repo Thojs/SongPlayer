@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer.mixin;
 
-import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
+import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.network.packet.s2c.play.GameJoinS2CPacket;
 import net.minecraft.network.packet.s2c.play.PlayerAbilitiesS2CPacket;
@@ -14,19 +15,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ClientPlayNetworkHandlerMixin {
 	@Inject(at = @At("TAIL"), method = "onGameJoin(Lnet/minecraft/network/packet/s2c/play/GameJoinS2CPacket;)V")
 	public void onOnGameJoin(GameJoinS2CPacket packet, CallbackInfo ci) {
-		NotePlayer.instance.cleanup();
+		SongHandler.instance.cleanup();
 	}
 
 	@Inject(at = @At("TAIL"), method = "onPlayerRespawn(Lnet/minecraft/network/packet/s2c/play/PlayerRespawnS2CPacket;)V")
 	public void onOnPlayerRespawn(PlayerRespawnS2CPacket packet, CallbackInfo ci) {
-		NotePlayer.instance.cleanup();
+		SongHandler.instance.cleanup();
 	}
 
 	@Inject(at = @At("TAIL"), method = "onPlayerAbilities(Lnet/minecraft/network/packet/s2c/play/PlayerAbilitiesS2CPacket;)V")
 	public void onOnPlayerAbilities(PlayerAbilitiesS2CPacket packet, CallbackInfo ci) {
-		NotePlayer handler = NotePlayer.instance;
-		if (handler.currentSong != null || !handler.songQueue.isEmpty()) {
-			com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getAbilities().flying = handler.wasFlying;
+		SongHandler handler = SongHandler.instance;
+		if (handler.loadedSong != null || !handler.songQueue.isEmpty()) {
+			SongPlayer.MC.player.getAbilities().flying = handler.wasFlying;
 		}
 	}
 }

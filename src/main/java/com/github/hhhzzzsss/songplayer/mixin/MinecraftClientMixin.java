@@ -1,9 +1,10 @@
 package com.github.hhhzzzsss.songplayer.mixin;
 
+import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.item.SongItemConfirmationScreen;
 import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
 import com.github.hhhzzzsss.songplayer.playing.ProgressDisplay;
-import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.LockableContainerBlockEntity;
 import net.minecraft.client.MinecraftClient;
@@ -30,17 +31,17 @@ public class MinecraftClientMixin {
 
 	@Inject(at = @At("HEAD"), method = "render(Z)V")
 	public void onRender(boolean tick, CallbackInfo ci) {
-		if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.world != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.player != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager != null) {
-			NotePlayer.instance.onUpdate(false);
+		if (SongPlayer.MC.world != null && SongPlayer.MC.player != null && SongPlayer.MC.interactionManager != null) {
+			SongHandler.instance.onUpdate(false);
 		} else {
-			NotePlayer.instance.cleanup();
+			SongHandler.instance.cleanup();
 		}
 	}
 
 	@Inject(at = @At("HEAD"), method = "tick()V")
 	public void onTick(CallbackInfo ci) {
-		if (com.github.hhhzzzsss.songplayer.SongPlayer.MC.world != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.player != null && com.github.hhhzzzsss.songplayer.SongPlayer.MC.interactionManager != null) {
-			NotePlayer.instance.onUpdate(true);
+		if (SongPlayer.MC.world != null && SongPlayer.MC.player != null && SongPlayer.MC.interactionManager != null) {
+			SongHandler.instance.onUpdate(true);
 		}
 		ProgressDisplay.instance.onTick();
 	}
@@ -52,21 +53,20 @@ public class MinecraftClientMixin {
 				EntityHitResult entityHitResult = (EntityHitResult)this.crosshairTarget;
 				Entity entity = entityHitResult.getEntity();
 				if (entity instanceof ItemFrameEntity) return;
-			}
-			else if (crosshairTarget.getType() == HitResult.Type.BLOCK) {
+			} else if (crosshairTarget.getType() == HitResult.Type.BLOCK) {
 				BlockHitResult blockHitResult = (BlockHitResult)this.crosshairTarget;
-				BlockEntity blockEntity = com.github.hhhzzzsss.songplayer.SongPlayer.MC.world.getBlockEntity(blockHitResult.getBlockPos());
+				BlockEntity blockEntity = SongPlayer.MC.world.getBlockEntity(blockHitResult.getBlockPos());
 				if (blockEntity instanceof LockableContainerBlockEntity) return;
 			}
 		}
 
-		ItemStack stack = com.github.hhhzzzsss.songplayer.SongPlayer.MC.player.getStackInHand(Hand.MAIN_HAND);
+		ItemStack stack = SongPlayer.MC.player.getStackInHand(Hand.MAIN_HAND);
 		if (!SongItemUtils.isSongItem(stack)) return;
 
 		try {
-			com.github.hhhzzzsss.songplayer.SongPlayer.MC.setScreen(new SongItemConfirmationScreen(stack));
+			SongPlayer.MC.setScreen(new SongItemConfirmationScreen(stack));
 		} catch (Exception e) {
-			com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§cFailed to load song item: §4" + e.getMessage());
+			SongPlayer.addChatMessage("§cFailed to load song item: §4" + e.getMessage());
 		}
 
 		itemUseCooldown = 4;

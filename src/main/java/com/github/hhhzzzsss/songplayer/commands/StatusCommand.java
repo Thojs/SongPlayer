@@ -1,7 +1,8 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
+import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.github.hhhzzzsss.songplayer.utils.Util;
-import com.github.hhhzzzsss.songplayer.playing.NotePlayer;
 import com.github.hhhzzzsss.songplayer.song.Song;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
@@ -20,16 +21,16 @@ class StatusCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            if (NotePlayer.instance.currentSong == null) {
-                com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage("§6No song is currently playing");
+            Song currentSong = SongHandler.instance.loadedSong;
+            if (currentSong == null) {
+                SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
-            Song currentSong = NotePlayer.instance.currentSong;
             long currentTime = Math.min(currentSong.time, currentSong.length);
             long totalTime = currentSong.length;
 
-            com.github.hhhzzzsss.songplayer.SongPlayer.addChatMessage(String.format("§6Currently playing %s §3(%s/%s)", currentSong.name, Util.formatTime(currentTime), Util.formatTime(totalTime)));
+            SongPlayer.addChatMessage(String.format("§6Currently playing %s §3(%s/%s)", currentSong.name, Util.formatTime(currentTime), Util.formatTime(totalTime)));
 
             return 1;
         });
