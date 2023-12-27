@@ -15,8 +15,6 @@ import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandRegistrationCallback;
 import net.fabricmc.fabric.api.command.v2.ArgumentTypeRegistry;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
@@ -28,7 +26,6 @@ import java.nio.file.Path;
 
 public class SongPlayer implements ModInitializer {
 	public static final MinecraftClient MC = MinecraftClient.getInstance();
-	public static final int NOTEBLOCK_BASE_ID = Block.getRawIdFromState(Blocks.NOTE_BLOCK.getDefaultState())-1;
 
 	public static final Path SONGPLAYER_DIR = Path.of("SongPlayer");
 	public static final Path PLAYLISTS_DIR = SONGPLAYER_DIR.resolve("playlists");

@@ -7,7 +7,6 @@ import com.github.hhhzzzsss.songplayer.song.Instrument;
 import com.github.hhhzzzsss.songplayer.song.Song;
 import com.github.hhhzzzsss.songplayer.stage.StageType;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
-import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -34,6 +33,8 @@ public class StageBuilder {
 	private LinkedList<BlockPos> requiredBreaks = new LinkedList<>();
 	public TreeSet<Integer> missingNotes = new TreeSet<>();
 	private int totalMissingNotes = 0;
+
+	private static final int TOTAL_PITCHES = NoteBlock.NOTE.getValues().size(); // total amount of pitches available in base game.
 
 	private final SongHandler handler;
 	StageBuilder(SongHandler handler) {
@@ -89,14 +90,13 @@ public class StageBuilder {
 			BlockPos bp = noteblockPositions.get(desiredNoteId);
 			if (bp == null) return;
 			BlockState state = world.getBlockState(bp);
-			int blockId = Block.getRawIdFromState(state);
 
-			int currentNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
+			int currentNoteId = -1;
+			if (state.getBlock() instanceof NoteBlock) currentNoteId = getCombinedNoteBlockId(state);
+
 			if (currentNoteId != desiredNoteId) {
-				holdNoteblock(desiredNoteId, buildSlot);
-				if (blockId != 0) {
-					handler.attackBlock(bp);
-				}
+				holdNoteblock(desiredNoteId);
+				if (!state.isAir()) handler.attackBlock(bp);
 				handler.placeBlock(bp);
 			}
 
@@ -153,12 +153,10 @@ public class StageBuilder {
 		// Remove already-existing notes from missingNotes, adding their positions to noteblockPositions, and create a list of unused noteblock locations
 		ArrayList<BlockPos> unusedNoteblockLocations = new ArrayList<>();
 		for (BlockPos nbPos : noteblockLocations) {
-
 			BlockState state = SongPlayer.MC.world.getBlockState(nbPos);
 
-			int blockId = Block.getRawIdFromState(state);
 			if (state.getBlock() instanceof NoteBlock) {
-				int noteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
+				int noteId = getCombinedNoteBlockId(state);
 				if (missingNotes.contains(noteId)) {
 					missingNotes.remove(noteId);
 					noteblockPositions.put(noteId, nbPos);
@@ -210,17 +208,15 @@ public class StageBuilder {
 		int wrongInstruments = 0;
 		for (Map.Entry<Integer, BlockPos> entry : noteblockPositions.entrySet()) {
 			BlockState bs = SongPlayer.MC.world.getBlockState(entry.getValue());
-			int blockId = Block.getRawIdFromState(bs);
-			int actualNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
 
-			if (actualNoteId < 0 || actualNoteId >= 400) return true;
+			if (!(bs.getBlock() instanceof NoteBlock)) return true;
 
-			int actualInstrument = actualNoteId / 25;
-			int actualPtich = actualNoteId % 25;
-			int targetInstrument = entry.getKey() / 25;
-			int targetPitch = entry.getKey() % 25;
+			int actualInstrument = bs.get(NoteBlock.INSTRUMENT).ordinal();
+			int actualPitch = bs.get(NoteBlock.NOTE);
+			int targetInstrument = entry.getKey() / TOTAL_PITCHES;
+			int targetPitch = entry.getKey() % TOTAL_PITCHES;
 
-			if (targetPitch != actualPtich) return true;
+			if (targetPitch != actualPitch) return true;
 
 			if (targetInstrument != actualInstrument) {
 				wrongInstruments++;
@@ -284,12 +280,20 @@ public class StageBuilder {
 		prevHeldItem = null;
 	}
 
-	private void holdNoteblock(int id, int slot) {
+	private int getCombinedNoteBlockId(BlockState state) {
+		return state.get(NoteBlock.INSTRUMENT).ordinal() * TOTAL_PITCHES + state.get(NoteBlock.NOTE);
+	}
+
+	private void holdNoteblock(int id) {
+		Instrument instrument = Instrument.getInstrumentFromId(id/TOTAL_PITCHES);
+		int note = id%TOTAL_PITCHES;
+		holdNoteBlock(instrument, note);
+	}
+
+	private void holdNoteBlock(Instrument instrument, int pitch) {
 		PlayerInventory inventory = handler.getPlayer().getInventory();
-		inventory.selectedSlot = slot;
+		inventory.selectedSlot = buildSlot;
 		((ClientPlayerInteractionManagerAccessor) handler.getInteractionManager()).invokeSyncSelectedSlot();
-		String instrument = Instrument.getInstrumentFromId(id/25).instrumentName;
-		int note = id%25;
 
 		NbtCompound nbt = new NbtCompound();
 		nbt.putString("id", "minecraft:note_block");
@@ -297,14 +301,14 @@ public class StageBuilder {
 
 		NbtCompound tag = new NbtCompound();
 		NbtCompound bsTag = new NbtCompound();
-		bsTag.putString("instrument", instrument);
-		bsTag.putString("note", Integer.toString(note));
+		bsTag.putString("instrument", instrument.instrumentName);
+		bsTag.putString("note", Integer.toString(pitch));
 
 		tag.put("BlockStateTag", bsTag);
 		nbt.put("tag", tag);
 
 		ItemStack noteblockStack = ItemStack.fromNbt(nbt);
-		inventory.main.set(slot, noteblockStack);
-		handler.getInteractionManager().clickCreativeStack(noteblockStack, 36 + slot);
+		inventory.main.set(buildSlot, noteblockStack);
+		handler.getInteractionManager().clickCreativeStack(noteblockStack, 36 + buildSlot);
 	}
 }

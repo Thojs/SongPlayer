@@ -3,7 +3,6 @@ package com.github.hhhzzzsss.songplayer.playing;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.github.hhhzzzsss.songplayer.song.*;
-import net.minecraft.block.NoteBlock;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -12,8 +11,6 @@ import net.minecraft.world.GameMode;
 
 public class NotePlayer {
     private final SongHandler handler;
-
-    private static final int pitchAmount = NoteBlock.NOTE.getValues().size();
 
     NotePlayer(SongHandler handler) {
         this.handler = handler;
@@ -43,12 +40,6 @@ public class NotePlayer {
                 handler.sendMovementPacketToStagePosition();
                 currentSong.pause();
                 stageBuilder.buildStartDelay = 20;
-                System.out.println("Total missing notes: " + stageBuilder.missingNotes.size());
-                for (int note : stageBuilder.missingNotes) {
-                    int pitch = note % pitchAmount;
-                    int instrumentId = note / pitchAmount;
-                    System.out.println("Missing note: " + Instrument.getInstrumentFromId(instrumentId).name() + ":" + pitch);
-                }
                 SongPlayer.addChatMessage("§6Stage was altered. Rebuilding!");
                 return;
             }

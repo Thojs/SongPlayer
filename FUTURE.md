@@ -7,3 +7,4 @@
 - Decrease suggestion length of big paths.
 - Kotlin?
 - Playlist functionality.
+- move config to `.minecraft/config` (fabric stuff?)
