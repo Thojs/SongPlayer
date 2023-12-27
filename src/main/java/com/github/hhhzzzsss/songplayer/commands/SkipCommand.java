@@ -25,7 +25,7 @@ class SkipCommand extends Command {
             }
 
             SongPlayer.addChatMessage("§6Skipped the current song.");
-            SongHandler.instance.loadedSong = null;
+            SongHandler.instance.getSongQueue().next();
 
             return 1;
         });
