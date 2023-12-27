@@ -53,8 +53,8 @@ public class SongPlayer implements ModInitializer {
 				new SphericalStage()
 		);
 
-		// Register converters
-		SongParserRegistry.instance.registerConverters(
+		// Register parsers
+		SongParserRegistry.instance.registerParsers(
 				new MidiParser(),
 				new NBSParser(),
 				new SPParser()

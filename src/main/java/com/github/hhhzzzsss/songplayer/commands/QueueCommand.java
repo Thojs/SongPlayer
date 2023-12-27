@@ -22,7 +22,7 @@ class QueueCommand extends Command {
         SongHandler instance = SongHandler.instance;
 
         node.executes(context -> {
-            if (instance.songQueue.isEmpty()) {
+            if (instance.getSongQueue().isEmpty()) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
@@ -31,7 +31,7 @@ class QueueCommand extends Command {
             SongPlayer.addChatMessage("§6Current song: §3" + instance.loadedSong.name);
 
             int index = 0;
-            for (Song song : instance.songQueue.getQueue()) {
+            for (Song song : instance.getSongQueue().getQueue()) {
                 index++;
                 SongPlayer.addChatMessage(String.format("§6%d. §3%s", index, song.name));
             }

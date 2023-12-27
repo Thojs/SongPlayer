@@ -1,6 +1,7 @@
-package com.github.hhhzzzsss.songplayer.item;
+package com.github.hhhzzzsss.songplayer.screens;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.item.SongItemLoaderThread;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import net.minecraft.client.font.MultilineText;
@@ -42,7 +43,12 @@ public class SongItemConfirmationScreen extends Screen {
         int centerX = this.width / 2;
 
         this.addDrawableChild(ButtonWidget.builder(CONFIRM, button -> {
-            SongHandler.instance.songQueue.loadSong(loaderThread);
+            try {
+                SongHandler.instance.getSongQueue().loadSong(loaderThread);
+            } catch (IllegalStateException e) {
+                SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
+            }
+
             this.client.setScreen(null);
         }).dimensions(centerX - 105, y, 100, 20).build());
 

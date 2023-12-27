@@ -2,7 +2,6 @@ package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.mixin.ClientPlayNetworkHandlerAccessor;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.playing.StageBuilder;
 import com.mojang.authlib.GameProfile;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.OtherClientPlayerEntity;
@@ -10,6 +9,7 @@ import net.minecraft.client.network.PlayerListEntry;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.util.math.BlockPos;
 
 import java.util.UUID;
 
@@ -23,11 +23,7 @@ public class FakePlayerEntity extends OtherClientPlayerEntity {
 		super(SongPlayer.MC.world, getProfile());
 		
 		copyStagePosAndPlayerLook();
-		
-		getInventory().clone(player.getInventory());
-		
-		Byte playerModel = player.getDataTracker().get(PlayerEntity.PLAYER_MODEL_PARTS);
-		getDataTracker().set(PlayerEntity.PLAYER_MODEL_PARTS, playerModel);
+		syncWithPlayer();
 		
 		headYaw = player.headYaw;
 		bodyYaw = player.bodyYaw;
@@ -43,11 +39,18 @@ public class FakePlayerEntity extends OtherClientPlayerEntity {
 		
 		world.addEntity(this);
 	}
+
+	public void syncWithPlayer() {
+		getInventory().clone(player.getInventory());
+
+		Byte playerModel = player.getDataTracker().get(PlayerEntity.PLAYER_MODEL_PARTS);
+		getDataTracker().set(PlayerEntity.PLAYER_MODEL_PARTS, playerModel);
+	}
 	
 	public void copyStagePosAndPlayerLook() {
-		StageBuilder stageBuilder = SongHandler.instance.stageBuilder;
-		if (stageBuilder.position != null) {
-			refreshPositionAndAngles(stageBuilder.position.getX()+0.5, stageBuilder.position.getY(), stageBuilder.position.getZ()+0.5, player.getYaw(), player.getPitch());
+		BlockPos pos = SongHandler.instance.getStagePosition();
+		if (pos != null) {
+			refreshPositionAndAngles(pos.getX()+0.5, pos.getY(), pos.getZ()+0.5, player.getYaw(), player.getPitch());
 			headYaw = player.headYaw;
 		} else {
 			copyPositionAndRotation(player);

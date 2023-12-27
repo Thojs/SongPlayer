@@ -23,19 +23,21 @@ public class NotePlayer {
         StageBuilder stageBuilder = handler.stageBuilder;
         Song currentSong = handler.loadedSong;
 
-        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
+        if (handler.getGameMode() != GameMode.SURVIVAL) {
             currentSong.pause();
             return;
         }
 
+        //todo move this to song handler
         if (tick) {
             if (stageBuilder.hasBreakingModification()) {
                 stageBuilder.checkBuildStatus(currentSong);
             }
+
             if (!stageBuilder.nothingToBuild()) { // Switch to building
                 stageBuilder.isBuilding = true;
                 handler.setCreativeIfNeeded();
-                stageBuilder.sendMovementPacketToStagePosition();
+                handler.sendMovementPacketToStagePosition();
                 currentSong.pause();
                 stageBuilder.buildStartDelay = 20;
                 System.out.println("Total missing notes: " + stageBuilder.missingNotes.size());
@@ -52,6 +54,7 @@ public class NotePlayer {
 
         currentSong.play();
 
+        // Play note blocks
         boolean somethingPlayed = false;
         currentSong.advanceTime();
         while (currentSong.reachedNextNote()) {
@@ -63,25 +66,19 @@ public class NotePlayer {
             }
         }
         if (somethingPlayed) handler.stopAttack();
-
-
-        // Done playing.
-        if (currentSong.finished()) {
-            SongPlayer.addChatMessage("§6Done playing §3" + currentSong.name);
-            handler.songQueue.next();
-            handler.loadedSong = null;
-        }
     }
 
     private void setPlayProgressDisplay() {
         Song currentSong = handler.loadedSong;
         long currentTime = Math.min(currentSong.time, currentSong.length);
         long totalTime = currentSong.length;
+
         MutableText songText = Text.empty()
                 .append(Text.literal("Now playing: ").formatted(Formatting.GOLD))
                 .append(Text.literal(currentSong.name).formatted(Formatting.BLUE))
                 .append(Text.literal(" | ").formatted(Formatting.GOLD))
                 .append(Text.literal(String.format("%s/%s", Util.formatTime(currentTime), Util.formatTime(totalTime))).formatted(Formatting.DARK_AQUA));
+
         if (currentSong.looping) {
             if (currentSong.loopCount > 0) {
                 songText.append(Text.literal(String.format(" | Loop (%d/%d)", currentSong.currentLoop, currentSong.loopCount)).formatted(Formatting.GOLD));
@@ -89,7 +86,7 @@ public class NotePlayer {
                 songText.append(Text.literal(" | Looping enabled").formatted(Formatting.GOLD));
             }
         }
-        MutableText playlistText = Text.empty();
-        ProgressDisplay.instance.setText(songText, playlistText);
+
+        ProgressDisplay.instance.setText(songText, Text.empty());
     }
 }

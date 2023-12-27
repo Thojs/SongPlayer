@@ -9,13 +9,11 @@ import com.github.hhhzzzsss.songplayer.stage.StageType;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
-import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
@@ -37,7 +35,6 @@ public class StageBuilder {
 	public int totalMissingNotes = 0;
 
 	private final SongHandler handler;
-
 	public StageBuilder(SongHandler handler) {
 		this.handler = handler;
 	}
@@ -56,7 +53,7 @@ public class StageBuilder {
 		}
 
 		ClientWorld world = SongPlayer.MC.world;
-		if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) return;
+		if (handler.getGameMode() != GameMode.CREATIVE) return;
 
 		if (nothingToBuild()) {
 			if (buildEndDelay > 0) {
@@ -64,7 +61,7 @@ public class StageBuilder {
 				return;
 			} else {
 				checkBuildStatus(handler.loadedSong);
-				sendMovementPacketToStagePosition();
+				handler.sendMovementPacketToStagePosition();
 			}
 		}
 
@@ -93,7 +90,7 @@ public class StageBuilder {
 			restoreBuildSlot();
 			isBuilding = false;
 			handler.setSurvivalIfNeeded();
-			sendMovementPacketToStagePosition();
+			handler.sendMovementPacketToStagePosition();
 			SongPlayer.addChatMessage("§6Now playing §3" + handler.loadedSong.name);
 		}
 	}
@@ -108,28 +105,12 @@ public class StageBuilder {
 	
 	public void movePlayerToStagePosition() {
 		if (position == null) return;
-		ClientPlayerEntity player = SongPlayer.MC.player;
+		ClientPlayerEntity player = handler.getPlayer();
 		player.getAbilities().allowFlying = true;
 		player.getAbilities().flying = true;
 		player.refreshPositionAndAngles(position.getX() + 0.5, position.getY() + 0.0, position.getZ() + 0.5, player.getYaw(), player.getPitch());
 		player.setVelocity(Vec3d.ZERO);
-		sendMovementPacketToStagePosition();
-	}
-
-	public void sendMovementPacketToStagePosition() {
-		AbstractClientPlayerEntity entity;
-		if (SongPlayer.fakePlayer != null) {
-			entity = SongPlayer.fakePlayer;
-		} else {
-			entity = SongPlayer.MC.player;
-		}
-
-		if (entity == null) return;
-
-		SongPlayer.MC.getNetworkHandler().sendPacket(new PlayerMoveC2SPacket.Full(
-				position.getX() + 0.5, position.getY(), position.getZ() + 0.5,
-				entity.getYaw(), entity.getPitch(),
-				true));
+		handler.sendMovementPacketToStagePosition();
 	}
 
 	public void checkBuildStatus(Song song) {
@@ -284,22 +265,22 @@ public class StageBuilder {
 	int buildSlot = -1;
 
 	void getAndSaveBuildSlot() {
-		buildSlot = SongPlayer.MC.player.getInventory().getSwappableHotbarSlot();
-		prevHeldItem = SongPlayer.MC.player.getInventory().getStack(buildSlot);
+		buildSlot = handler.getPlayer().getInventory().getSwappableHotbarSlot();
+		prevHeldItem = handler.getPlayer().getInventory().getStack(buildSlot);
 	}
 
 	void restoreBuildSlot() {
-		if (buildSlot != -1) {
-			SongPlayer.MC.player.getInventory().setStack(buildSlot, prevHeldItem);
-			SongPlayer.MC.interactionManager.clickCreativeStack(prevHeldItem, 36 + buildSlot);
-			buildSlot = -1;
-		}
+		if (buildSlot == -1) return;
+
+		handler.getPlayer().getInventory().setStack(buildSlot, prevHeldItem);
+		handler.getInteractionManager().clickCreativeStack(prevHeldItem, 36 + buildSlot);
+		buildSlot = -1;
 	}
 
 	private void holdNoteblock(int id, int slot) {
-		PlayerInventory inventory = SongPlayer.MC.player.getInventory();
+		PlayerInventory inventory = handler.getPlayer().getInventory();
 		inventory.selectedSlot = slot;
-		((ClientPlayerInteractionManagerAccessor) SongPlayer.MC.interactionManager).invokeSyncSelectedSlot();
+		((ClientPlayerInteractionManagerAccessor) handler.getInteractionManager()).invokeSyncSelectedSlot();
 		String instrument = Instrument.getInstrumentFromId(id/25).instrumentName;
 		int note = id%25;
 
@@ -317,6 +298,6 @@ public class StageBuilder {
 
 		ItemStack noteblockStack = ItemStack.fromNbt(nbt);
 		inventory.main.set(slot, noteblockStack);
-		SongPlayer.MC.interactionManager.clickCreativeStack(noteblockStack, 36 + slot);
+		handler.getInteractionManager().clickCreativeStack(noteblockStack, 36 + slot);
 	}
 }

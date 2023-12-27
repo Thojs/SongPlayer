@@ -1,8 +1,8 @@
 package com.github.hhhzzzsss.songplayer.song;
 
 public class Note implements Comparable<Note> {
-	public int noteId;
-	public long time;
+	public final int noteId;
+	public final long time;
 
 	public Note(int note, long time) {
 		this.noteId = note;

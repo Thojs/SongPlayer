@@ -1,7 +1,7 @@
 package com.github.hhhzzzsss.songplayer.mixin;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.item.SongItemConfirmationScreen;
+import com.github.hhhzzzsss.songplayer.screens.SongItemConfirmationScreen;
 import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
 import com.github.hhhzzzsss.songplayer.playing.ProgressDisplay;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;

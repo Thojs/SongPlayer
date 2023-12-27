@@ -14,7 +14,7 @@ public class SongParserRegistry {
     private List<SongParser> sortedMIMEParserList = new ArrayList<>();
     private List<SongParser> sortedFileParserList = new ArrayList<>();
 
-    public void registerConverters(SongParser... parsers) {
+    public void registerParsers(SongParser... parsers) {
         this.parsers.addAll(List.of(parsers));
 
         updateSortedFileParserList();

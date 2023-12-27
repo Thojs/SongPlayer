@@ -9,10 +9,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class SongQueue {
-    public LinkedList<Song> songQueue = new LinkedList<>();
-    public Song currentSong = null;
+    private final LinkedList<Song> songQueue = new LinkedList<>();
+    private Song currentSong = null;
 
-    public SongLoaderThread loaderThread = null;
+    private SongLoaderThread loaderThread = null;
 
     // Playback
     public void next() {
@@ -25,8 +25,13 @@ public class SongQueue {
         songQueue.clear();
     }
 
+    // Accessors
     public List<Song> getQueue() {
         return songQueue;
+    }
+
+    public Song getCurrentSong() {
+        return currentSong;
     }
 
     // Loading
@@ -35,25 +40,18 @@ public class SongQueue {
         checkSong();
     }
 
-    public void loadSong(String location) {
+    public void loadSong(String location) throws IOException, IllegalStateException {
         if (loaderThread != null) {
-            SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
-            return;
+            throw new IllegalStateException("Already loading a song, cannot load another");
         }
 
-        try {
-            loaderThread = new SongLoaderThread(location);
-            SongPlayer.addChatMessage("§6Loading §3" + location);
-            loaderThread.start();
-        } catch (IOException e) {
-            SongPlayer.addChatMessage("§cFailed to load song: §4" + e.getMessage());
-        }
+        loaderThread = new SongLoaderThread(location);
+        loaderThread.start();
     }
 
-    public void loadSong(SongLoaderThread thread) {
+    public void loadSong(SongLoaderThread thread) throws IllegalStateException {
         if (loaderThread != null) {
-            SongPlayer.addChatMessage("§cAlready loading a song, cannot load another");
-            return;
+            throw new IllegalStateException("Already loading a song, cannot load another");
         }
 
         loaderThread = thread;
@@ -67,6 +65,7 @@ public class SongQueue {
         } else {
             addSong(loaderThread.song);
         }
+
         loaderThread = null;
     }
 

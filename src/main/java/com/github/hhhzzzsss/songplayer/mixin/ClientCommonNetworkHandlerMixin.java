@@ -3,7 +3,6 @@ package com.github.hhhzzzsss.songplayer.mixin;
 import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.playing.StageBuilder;
 import net.minecraft.client.network.ClientCommonNetworkHandler;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.network.ClientConnection;
@@ -27,10 +26,9 @@ public class ClientCommonNetworkHandlerMixin {
 
     @Inject(at = @At("HEAD"), method = "sendPacket(Lnet/minecraft/network/packet/Packet;)V", cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
-        StageBuilder stageBuilder = SongHandler.instance.stageBuilder;
-
-        if (stageBuilder.position != null && SongHandler.instance.isPlaying && packet instanceof PlayerMoveC2SPacket) {
+        if (SongHandler.instance.isPlaying() && packet instanceof PlayerMoveC2SPacket) {
             ci.cancel();
+
             if (Config.getConfig().rotate) return;
 
             connection.send(new PlayerMoveC2SPacket.LookAndOnGround(

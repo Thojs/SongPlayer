@@ -4,7 +4,11 @@ import com.github.hhhzzzsss.songplayer.Config;
 import com.github.hhhzzzsss.songplayer.FakePlayerEntity;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.song.Song;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
 import net.minecraft.util.hit.BlockHitResult;
@@ -20,10 +24,10 @@ public class SongHandler {
 
     public final StageBuilder stageBuilder = new StageBuilder(this);
     public final NotePlayer notePlayer = new NotePlayer(this);
+    private final SongQueue songQueue = new SongQueue();
 
-    public boolean isPlaying = false;
+    private boolean isPlaying = false;
 
-    public SongQueue songQueue = new SongQueue();
     public Song loadedSong = null;
 
     public GameMode originalGamemode = GameMode.CREATIVE;
@@ -33,9 +37,16 @@ public class SongHandler {
         // Check if loader thread is finished and handle accordingly
         songQueue.checkLoaderThread();
 
+        // Check if current song finished playing
+        if (loadedSong != null && loadedSong.finished()) {
+            SongPlayer.addChatMessage("§6Done playing §3" + loadedSong.name);
+            songQueue.next();
+            loadedSong = null;
+        }
+
         // Check queue and load song from it if necessary
-        if (loadedSong != songQueue.currentSong) {
-            setSong(songQueue.currentSong);
+        if (loadedSong != songQueue.getCurrentSong()) {
+            setSong(songQueue.getCurrentSong());
         }
 
         // Run cached command if timeout reached
@@ -46,43 +57,52 @@ public class SongHandler {
             if (SongPlayer.fakePlayer != null) {
                 restoreStateAndCleanUp();
             } else {
-                originalGamemode = SongPlayer.MC.interactionManager.getCurrentGameMode();
+                originalGamemode = getGameMode();
             }
+            return;
+        }
+
+        // Set stage position if none is set.
+        if (stageBuilder.position == null) {
+            stageBuilder.position = getPlayer().getBlockPos();
+            stageBuilder.movePlayerToStagePosition();
+        }
+
+        // Fake player synchronization
+        synchronizeFakePlayer();
+
+        // Fly
+        getAbilities().allowFlying = true;
+        wasFlying = getAbilities().flying;
+
+        // Execute building / playing.
+        if (stageBuilder.isBuilding) {
+            stageBuilder.handleBuilding(tick);
         } else {
-            // Otherwise, handle song playing
-            if (stageBuilder.position == null) {
-                stageBuilder.position = SongPlayer.MC.player.getBlockPos();
-                stageBuilder.movePlayerToStagePosition();
-            }
+            notePlayer.handlePlaying(tick);
+        }
+    }
 
-            if (Config.getConfig().showFakePlayer && SongPlayer.fakePlayer == null) {
-                SongPlayer.fakePlayer = new FakePlayerEntity();
-                SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
-            }
+    // Fake player
+    private void synchronizeFakePlayer() {
+        if (Config.getConfig().showFakePlayer && SongPlayer.fakePlayer == null) {
+            SongPlayer.fakePlayer = new FakePlayerEntity();
+            SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
+        }
 
-            if (!Config.getConfig().showFakePlayer && SongPlayer.fakePlayer != null) {
-                SongPlayer.removeFakePlayer();
-            }
+        if (!Config.getConfig().showFakePlayer && SongPlayer.fakePlayer != null) {
+            SongPlayer.removeFakePlayer();
+        }
 
-            if (SongPlayer.fakePlayer != null) {
-                SongPlayer.fakePlayer.getInventory().clone(SongPlayer.MC.player.getInventory());
-            }
-
-            SongPlayer.MC.player.getAbilities().allowFlying = true;
-            wasFlying = SongPlayer.MC.player.getAbilities().flying;
-
-            if (stageBuilder.isBuilding) {
-                stageBuilder.handleBuilding(tick);
-            } else {
-                notePlayer.handlePlaying(tick);
-            }
+        if (SongPlayer.fakePlayer != null) {
+            SongPlayer.fakePlayer.syncWithPlayer();
         }
     }
 
     // Movements
     public void doMovements(double lookX, double lookY, double lookZ) {
         if (Config.getConfig().swing) {
-            SongPlayer.MC.player.swingHand(Hand.MAIN_HAND);
+            getPlayer().swingHand(Hand.MAIN_HAND);
             if (SongPlayer.fakePlayer != null) {
                 SongPlayer.fakePlayer.swingHand(Hand.MAIN_HAND);
             }
@@ -90,7 +110,7 @@ public class SongHandler {
 
         if (Config.getConfig().rotate) {
             double d = lookX - (stageBuilder.position.getX() + 0.5);
-            double e = lookY - (stageBuilder.position.getY() + SongPlayer.MC.player.getStandingEyeHeight());
+            double e = lookY - (stageBuilder.position.getY() + getPlayer().getStandingEyeHeight());
             double f = lookZ - (stageBuilder.position.getZ() + 0.5);
             double g = Math.sqrt(d * d + f * f);
             float pitch = MathHelper.wrapDegrees((float) (-(MathHelper.atan2(e, g) * 57.2957763671875)));
@@ -100,12 +120,28 @@ public class SongHandler {
                 SongPlayer.fakePlayer.setYaw(yaw);
                 SongPlayer.fakePlayer.setHeadYaw(yaw);
             }
-            SongPlayer.MC.player.networkHandler.getConnection().send(new PlayerMoveC2SPacket.Full(
+            getPlayer().networkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
                     stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5,
                     yaw, pitch,
                     true
             ));
         }
+    }
+
+    public void sendMovementPacketToStagePosition() {
+        AbstractClientPlayerEntity entity;
+        if (SongPlayer.fakePlayer != null) {
+            entity = SongPlayer.fakePlayer;
+        } else {
+            entity = getPlayer();
+        }
+
+        if (entity == null) return;
+
+        getPlayer().networkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
+                stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5,
+                entity.getYaw(), entity.getPitch(),
+                true));
     }
 
     // Commands / messages
@@ -123,6 +159,8 @@ public class SongHandler {
 
     public void checkCommandCache() {
         ClientPlayNetworkHandler handler = SongPlayer.MC.getNetworkHandler();
+        if (handler == null) return;
+
         long currentTime = System.currentTimeMillis();
         if (currentTime >= lastCommandTime + 1500 && cachedCommand != null) {
             handler.sendCommand(cachedCommand);
@@ -140,12 +178,12 @@ public class SongHandler {
     }
 
     public void setCreativeIfNeeded() {
-        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.CREATIVE) {
+        if (getGameMode() != GameMode.CREATIVE) {
             sendGamemodeCommand(Config.getConfig().creativeCommand);
         }
     }
     public void setSurvivalIfNeeded() {
-        if (SongPlayer.MC.interactionManager.getCurrentGameMode() != GameMode.SURVIVAL) {
+        if (getGameMode() != GameMode.SURVIVAL) {
             sendGamemodeCommand(Config.getConfig().survivalCommand);
         }
     }
@@ -158,17 +196,17 @@ public class SongHandler {
         fx += bp.getX();
         fy += bp.getY();
         fz += bp.getZ();
-        SongPlayer.MC.interactionManager.interactBlock(SongPlayer.MC.player, Hand.MAIN_HAND, new BlockHitResult(new Vec3d(fx, fy, fz), Direction.UP, bp, false));
+        getInteractionManager().interactBlock(getPlayer(), Hand.MAIN_HAND, new BlockHitResult(new Vec3d(fx, fy, fz), Direction.UP, bp, false));
         doMovements(fx, fy, fz);
     }
 
     public void attackBlock(BlockPos bp) {
-        SongPlayer.MC.interactionManager.attackBlock(bp, Direction.UP);
+        getInteractionManager().attackBlock(bp, Direction.UP);
         doMovements(bp.getX() + 0.5, bp.getY() + 0.5, bp.getZ() + 0.5);
     }
 
     public void stopAttack() {
-        SongPlayer.MC.interactionManager.cancelBlockBreaking();
+        getInteractionManager().cancelBlockBreaking();
     }
 
     // Cleanup
@@ -184,7 +222,7 @@ public class SongHandler {
         stageBuilder.movePlayerToStagePosition();
         stageBuilder.restoreBuildSlot();
 
-        if (originalGamemode != SongPlayer.MC.interactionManager.getCurrentGameMode()) {
+        if (originalGamemode != getGameMode()) {
             if (originalGamemode == GameMode.CREATIVE) {
                 setCreativeIfNeeded();
             } else if (originalGamemode == GameMode.SURVIVAL) {
@@ -193,6 +231,19 @@ public class SongHandler {
         }
 
         cleanup();
+    }
+
+    // Accessors
+    public SongQueue getSongQueue() {
+        return songQueue;
+    }
+
+    public boolean isPlaying() {
+        return isPlaying;
+    }
+
+    public BlockPos getStagePosition() {
+        return stageBuilder.position;
     }
 
     // Other
@@ -207,6 +258,7 @@ public class SongHandler {
 
         isPlaying = true;
 
+        // todo move this to stageBuilder & check stage before executing creative command.
         stageBuilder.isBuilding = true;
         setCreativeIfNeeded();
 
@@ -215,13 +267,29 @@ public class SongHandler {
         }
 
         if (stageBuilder.position == null) {
-            stageBuilder.position = SongPlayer.MC.player.getBlockPos();
+            stageBuilder.position = getPlayer().getBlockPos();
             stageBuilder.movePlayerToStagePosition();
         } else {
-            stageBuilder.sendMovementPacketToStagePosition();
+            sendMovementPacketToStagePosition();
         }
 
         stageBuilder.getAndSaveBuildSlot();
         SongPlayer.addChatMessage("§6Building noteblocks");
+    }
+
+    ClientPlayerInteractionManager getInteractionManager() {
+        return SongPlayer.MC.interactionManager;
+    }
+
+    GameMode getGameMode() {
+        return getInteractionManager().getCurrentGameMode();
+    }
+
+    ClientPlayerEntity getPlayer() {
+        return SongPlayer.MC.player;
+    }
+
+    private PlayerAbilities getAbilities() {
+        return getPlayer().getAbilities();
     }
 }

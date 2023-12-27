@@ -37,27 +37,23 @@ public class DownloadUtils {
 		conn.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:86.0) Gecko/20100101 Firefox/86.0");
 
 		String contentType = conn.getHeaderField("Content-Type");
-		BufferedInputStream downloadStream = new BufferedInputStream(conn.getInputStream());
-		ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
 
-		try {
-			byte[] buf = new byte[1024];
-			int n;
-			int tot = 0;
-			while ((n = downloadStream.read(buf)) > 0) {
-				byteArrayStream.write(buf, 0, n);
-				tot += n;
-				if (tot > maxSize) {
-					throw new IOException("File is too large");
-				}
-				if (Thread.interrupted()) {
-					return null;
-				}
-			}
-			return new DownloadResponse(byteArrayStream.toByteArray(), contentType);
-		} finally {
-			// Closing a ByteArrayInputStream has no effect, so I do not close it.
-			downloadStream.close();
-		}
-	}
+        try (BufferedInputStream downloadStream = new BufferedInputStream(conn.getInputStream())) {
+            ByteArrayOutputStream byteArrayStream = new ByteArrayOutputStream();
+            byte[] buf = new byte[1024];
+            int n;
+            int tot = 0;
+            while ((n = downloadStream.read(buf)) > 0) {
+                byteArrayStream.write(buf, 0, n);
+                tot += n;
+                if (tot > maxSize) {
+                    throw new IOException("File is too large");
+                }
+                if (Thread.interrupted()) {
+                    return null;
+                }
+            }
+            return new DownloadResponse(byteArrayStream.toByteArray(), contentType);
+        }
+    }
 }

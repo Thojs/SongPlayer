@@ -70,14 +70,13 @@ public class NBSParser implements SongParser {
 
             short songLength;
             byte format = 0;
-            byte vanillaInstrumentCount = 0;
             songLength = buffer.getShort(); // If it's not 0, then it uses the old format
             if (songLength == 0) {
                 format = buffer.get();
             }
 
             if (format >= 1) {
-                vanillaInstrumentCount = buffer.get();
+                buffer.get(); // vanilla instrument count
             }
             if (format >= 3) {
                 songLength = buffer.getShort();
