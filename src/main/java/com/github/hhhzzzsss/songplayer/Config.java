@@ -14,14 +14,17 @@ public class Config {
     private static final Path CONFIG_FILE = SongPlayer.SONGPLAYER_DIR.resolve("config.json");
     private static final Gson gson = new Gson();
 
+    // Values
     public String creativeCommand = "gamemode creative";
     public String survivalCommand = "gamemode survival";
-    public boolean showFakePlayer = false;
-    public boolean loopPlaylists = false;
-    public boolean shufflePlaylists = false;
+
+    public boolean showFakePlayer = true;
+
     public String stageType = "default";
+
     public boolean swing = false;
     public boolean rotate = false;
+
     public boolean doAnnouncement = false;
     public String announcementMessage = "&6Now playing: &3[name]";
 
