@@ -9,6 +9,7 @@ import com.github.hhhzzzsss.songplayer.stage.StageType;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.NoteBlock;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerInventory;
@@ -30,12 +31,12 @@ public class StageBuilder {
 	public BlockPos position = null;
 	public HashMap<Integer, BlockPos> noteblockPositions = new HashMap<>();
 
-	public LinkedList<BlockPos> requiredBreaks = new LinkedList<>();
+	private LinkedList<BlockPos> requiredBreaks = new LinkedList<>();
 	public TreeSet<Integer> missingNotes = new TreeSet<>();
-	public int totalMissingNotes = 0;
+	private int totalMissingNotes = 0;
 
 	private final SongHandler handler;
-	public StageBuilder(SongHandler handler) {
+	StageBuilder(SongHandler handler) {
 		this.handler = handler;
 	}
 
@@ -55,16 +56,23 @@ public class StageBuilder {
 		ClientWorld world = SongPlayer.MC.world;
 		if (handler.getGameMode() != GameMode.CREATIVE) return;
 
+		// Check if building has finished & all needed note-blocks have been placed.
 		if (nothingToBuild()) {
 			if (buildEndDelay > 0) {
 				buildEndDelay--;
 				return;
-			} else {
-				checkBuildStatus(handler.loadedSong);
-				handler.sendMovementPacketToStagePosition();
 			}
+
+			checkBuildStatus(handler.loadedSong);
+			handler.sendMovementPacketToStagePosition();
 		}
 
+		if (buildSlot == -1) {
+			getAndSaveBuildSlot();
+			SongPlayer.addChatMessage("§6Building noteblocks");
+		}
+
+		// Break blocks from list if there are any.
 		if (!requiredBreaks.isEmpty()) {
 			for (int i=0; i<5; i++) {
 				if (requiredBreaks.isEmpty()) break;
@@ -72,11 +80,17 @@ public class StageBuilder {
 				handler.attackBlock(bp);
 			}
 			buildEndDelay = 20;
-		} else if (!missingNotes.isEmpty()) {
+			return;
+		}
+
+		// Place missing notes if there are any
+		if (!missingNotes.isEmpty()) {
 			int desiredNoteId = missingNotes.pollFirst();
 			BlockPos bp = noteblockPositions.get(desiredNoteId);
 			if (bp == null) return;
-			int blockId = Block.getRawIdFromState(world.getBlockState(bp));
+			BlockState state = world.getBlockState(bp);
+			int blockId = Block.getRawIdFromState(state);
+
 			int currentNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
 			if (currentNoteId != desiredNoteId) {
 				holdNoteblock(desiredNoteId, buildSlot);
@@ -85,22 +99,24 @@ public class StageBuilder {
 				}
 				handler.placeBlock(bp);
 			}
+
 			buildEndDelay = 20;
-		} else { // Switch to playing
-			restoreBuildSlot();
-			isBuilding = false;
-			handler.setSurvivalIfNeeded();
-			handler.sendMovementPacketToStagePosition();
-			SongPlayer.addChatMessage("§6Now playing §3" + handler.loadedSong.name);
+			return;
 		}
+
+		// restore everything, go to play state.
+		restoreBuildSlot();
+		isBuilding = false;
+		handler.setSurvivalIfNeeded();
+		handler.sendMovementPacketToStagePosition();
+		SongPlayer.addChatMessage("§6Now playing §3" + handler.loadedSong.name);
 	}
 
 	private void setBuildProgressDisplay() {
 		MutableText buildText = Text.empty()
 				.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
 				.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
-		MutableText playlistText = Text.empty();
-		ProgressDisplay.instance.setText(buildText, playlistText);
+		ProgressDisplay.instance.setText(buildText, Text.empty());
 	}
 	
 	public void movePlayerToStagePosition() {
@@ -137,9 +153,11 @@ public class StageBuilder {
 		// Remove already-existing notes from missingNotes, adding their positions to noteblockPositions, and create a list of unused noteblock locations
 		ArrayList<BlockPos> unusedNoteblockLocations = new ArrayList<>();
 		for (BlockPos nbPos : noteblockLocations) {
-			BlockState bs = SongPlayer.MC.world.getBlockState(nbPos);
-			int blockId = Block.getRawIdFromState(bs);
-			if (blockId >= SongPlayer.NOTEBLOCK_BASE_ID && blockId < SongPlayer.NOTEBLOCK_BASE_ID+800) {
+
+			BlockState state = SongPlayer.MC.world.getBlockState(nbPos);
+
+			int blockId = Block.getRawIdFromState(state);
+			if (state.getBlock() instanceof NoteBlock) {
 				int noteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
 				if (missingNotes.contains(noteId)) {
 					missingNotes.remove(noteId);
@@ -179,20 +197,8 @@ public class StageBuilder {
 				.sorted(this::sortBlocks)
 				.collect(Collectors.toCollection(LinkedList::new));
 
-		if (requiredBreaks.stream().noneMatch(bp -> withinBreakingDist(bp.getX()-position.getX(), bp.getY()-position.getY(), bp.getZ()-position.getZ()))) {
-			requiredBreaks.clear();
-		}
-
 		// Set total missing notes
 		totalMissingNotes = missingNotes.size();
-	}
-
-	// This doesn't check for whether the block above the noteblock position is also reachable
-	// Usually there is sky above you though so hopefully this doesn't cause a problem most of the time
-	boolean withinBreakingDist(int dx, int dy, int dz) {
-		double dy1 = dy + 0.5 - 1.62; // Standing eye height
-		double dy2 = dy + 0.5 - 1.27; // Crouching eye height
-		return dx*dx + dy1*dy1 + dz*dz < 5.99999*5.99999 && dx*dx + dy2*dy2 + dz*dz < 5.99999*5.99999;
 	}
 
 	public boolean nothingToBuild() {
@@ -206,16 +212,16 @@ public class StageBuilder {
 			BlockState bs = SongPlayer.MC.world.getBlockState(entry.getValue());
 			int blockId = Block.getRawIdFromState(bs);
 			int actualNoteId = (blockId-SongPlayer.NOTEBLOCK_BASE_ID)/2;
-			if (actualNoteId < 0 || actualNoteId >= 400) {
-				return true;
-			}
+
+			if (actualNoteId < 0 || actualNoteId >= 400) return true;
+
 			int actualInstrument = actualNoteId / 25;
 			int actualPtich = actualNoteId % 25;
 			int targetInstrument = entry.getKey() / 25;
 			int targetPitch = entry.getKey() % 25;
-			if (targetPitch != actualPtich) {
-				return true;
-			}
+
+			if (targetPitch != actualPtich) return true;
+
 			if (targetInstrument != actualInstrument) {
 				wrongInstruments++;
 				if (wrongInstruments > WRONG_INSTRUMENT_TOLERANCE) {
@@ -264,7 +270,7 @@ public class StageBuilder {
 	private ItemStack prevHeldItem = null;
 	int buildSlot = -1;
 
-	void getAndSaveBuildSlot() {
+	private void getAndSaveBuildSlot() {
 		buildSlot = handler.getPlayer().getInventory().getSwappableHotbarSlot();
 		prevHeldItem = handler.getPlayer().getInventory().getStack(buildSlot);
 	}
@@ -275,6 +281,7 @@ public class StageBuilder {
 		handler.getPlayer().getInventory().setStack(buildSlot, prevHeldItem);
 		handler.getInteractionManager().clickCreativeStack(prevHeldItem, 36 + buildSlot);
 		buildSlot = -1;
+		prevHeldItem = null;
 	}
 
 	private void holdNoteblock(int id, int slot) {

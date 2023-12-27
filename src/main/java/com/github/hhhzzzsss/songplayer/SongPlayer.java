@@ -20,7 +20,6 @@ import net.minecraft.block.Blocks;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.item.ModelPredicateProviderRegistry;
 import net.minecraft.command.argument.serialize.ConstantArgumentSerializer;
-import net.minecraft.entity.Entity;
 import net.minecraft.item.Items;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -34,7 +33,6 @@ public class SongPlayer implements ModInitializer {
 	public static final Path SONGPLAYER_DIR = Path.of("SongPlayer");
 	public static final Path PLAYLISTS_DIR = SONGPLAYER_DIR.resolve("playlists");
 	public static final Path SONG_DIR = SONGPLAYER_DIR.resolve("songs");
-	public static FakePlayerEntity fakePlayer;
 
 	@Override
 	public void onInitialize() {
@@ -71,12 +69,5 @@ public class SongPlayer implements ModInitializer {
 
 	public static void addChatMessage(Text text) {
 		MC.player.sendMessage(text, false);
-	}
-
-	public static void removeFakePlayer() {
-		if (fakePlayer != null) {
-			fakePlayer.remove(Entity.RemovalReason.DISCARDED);
-			fakePlayer = null;
-		}
 	}
 }

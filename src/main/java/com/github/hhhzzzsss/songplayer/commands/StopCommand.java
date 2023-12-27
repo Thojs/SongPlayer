@@ -26,10 +26,6 @@ class StopCommand extends Command {
                 return 1;
             }
 
-            if (instance.getStagePosition() != null) {
-                instance.stageBuilder.movePlayerToStagePosition();
-            }
-
             instance.restoreStateAndCleanUp();
             SongPlayer.addChatMessage("§6Stopped playing");
 

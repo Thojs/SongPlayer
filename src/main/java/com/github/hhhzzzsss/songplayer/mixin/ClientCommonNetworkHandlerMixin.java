@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer.mixin;
 
 import com.github.hhhzzzsss.songplayer.Config;
+import com.github.hhhzzzsss.songplayer.FakePlayerEntity;
 import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.playing.SongHandler;
 import net.minecraft.client.network.ClientCommonNetworkHandler;
@@ -26,6 +27,8 @@ public class ClientCommonNetworkHandlerMixin {
 
     @Inject(at = @At("HEAD"), method = "sendPacket(Lnet/minecraft/network/packet/Packet;)V", cancellable = true)
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
+        FakePlayerEntity fakePlayer = SongHandler.fakePlayer;
+
         if (SongHandler.instance.isPlaying() && packet instanceof PlayerMoveC2SPacket) {
             ci.cancel();
 
@@ -36,19 +39,17 @@ public class ClientCommonNetworkHandlerMixin {
                     true
             ));
 
-            if (SongPlayer.fakePlayer != null) {
-                SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
-            }
+            if (fakePlayer != null) fakePlayer.copyStagePosAndPlayerLook();
         } else if (packet instanceof ClientCommandC2SPacket) {
             ClientCommandC2SPacket.Mode mode = ((ClientCommandC2SPacket) packet).getMode();
-            if (SongPlayer.fakePlayer == null) return;
+            if (fakePlayer == null) return;
 
             if (mode == ClientCommandC2SPacket.Mode.PRESS_SHIFT_KEY) {
-                SongPlayer.fakePlayer.setSneaking(true);
-                SongPlayer.fakePlayer.setPose(EntityPose.CROUCHING);
+                fakePlayer.setSneaking(true);
+                fakePlayer.setPose(EntityPose.CROUCHING);
             } else if (mode == ClientCommandC2SPacket.Mode.RELEASE_SHIFT_KEY) {
-                SongPlayer.fakePlayer.setSneaking(false);
-                SongPlayer.fakePlayer.setPose(EntityPose.STANDING);
+                fakePlayer.setSneaking(false);
+                fakePlayer.setPose(EntityPose.STANDING);
             }
         }
     }

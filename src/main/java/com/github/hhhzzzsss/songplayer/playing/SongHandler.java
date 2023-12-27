@@ -8,6 +8,7 @@ import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerInteractionManager;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.network.packet.c2s.play.PlayerMoveC2SPacket;
 import net.minecraft.util.Hand;
@@ -26,11 +27,13 @@ public class SongHandler {
     public final NotePlayer notePlayer = new NotePlayer(this);
     private final SongQueue songQueue = new SongQueue();
 
+    public static FakePlayerEntity fakePlayer;
+
     private boolean isPlaying = false;
 
     public Song loadedSong = null;
 
-    public GameMode originalGamemode = GameMode.CREATIVE;
+    private GameMode originalGamemode = GameMode.CREATIVE;
     public boolean wasFlying = false;
 
     public void onUpdate(boolean tick) {
@@ -54,7 +57,7 @@ public class SongHandler {
 
         // Check if no song is playing and, if necessary, handle cleanup
         if (loadedSong == null) {
-            if (SongPlayer.fakePlayer != null) {
+            if (fakePlayer != null) {
                 restoreStateAndCleanUp();
             } else {
                 originalGamemode = getGameMode();
@@ -85,17 +88,23 @@ public class SongHandler {
 
     // Fake player
     private void synchronizeFakePlayer() {
-        if (Config.getConfig().showFakePlayer && SongPlayer.fakePlayer == null) {
-            SongPlayer.fakePlayer = new FakePlayerEntity();
-            SongPlayer.fakePlayer.copyStagePosAndPlayerLook();
+        if (Config.getConfig().showFakePlayer && fakePlayer == null) {
+            fakePlayer = new FakePlayerEntity();
+            fakePlayer.copyStagePosAndPlayerLook();
         }
 
-        if (!Config.getConfig().showFakePlayer && SongPlayer.fakePlayer != null) {
-            SongPlayer.removeFakePlayer();
+        if (!Config.getConfig().showFakePlayer && fakePlayer != null) {
+            removeFakePlayer();
         }
 
-        if (SongPlayer.fakePlayer != null) {
-            SongPlayer.fakePlayer.syncWithPlayer();
+        if (fakePlayer != null) fakePlayer.syncWithPlayer();
+
+    }
+
+    public static void removeFakePlayer() {
+        if (fakePlayer != null) {
+            fakePlayer.remove(Entity.RemovalReason.DISCARDED);
+            fakePlayer = null;
         }
     }
 
@@ -103,8 +112,8 @@ public class SongHandler {
     public void doMovements(double lookX, double lookY, double lookZ) {
         if (Config.getConfig().swing) {
             getPlayer().swingHand(Hand.MAIN_HAND);
-            if (SongPlayer.fakePlayer != null) {
-                SongPlayer.fakePlayer.swingHand(Hand.MAIN_HAND);
+            if (fakePlayer != null) {
+                fakePlayer.swingHand(Hand.MAIN_HAND);
             }
         }
 
@@ -115,11 +124,12 @@ public class SongHandler {
             double g = Math.sqrt(d * d + f * f);
             float pitch = MathHelper.wrapDegrees((float) (-(MathHelper.atan2(e, g) * 57.2957763671875)));
             float yaw = MathHelper.wrapDegrees((float) (MathHelper.atan2(f, d) * 57.2957763671875) - 90.0f);
-            if (SongPlayer.fakePlayer != null) {
-                SongPlayer.fakePlayer.setPitch(pitch);
-                SongPlayer.fakePlayer.setYaw(yaw);
-                SongPlayer.fakePlayer.setHeadYaw(yaw);
+            if (fakePlayer != null) {
+                fakePlayer.setPitch(pitch);
+                fakePlayer.setYaw(yaw);
+                fakePlayer.setHeadYaw(yaw);
             }
+
             getPlayer().networkHandler.sendPacket(new PlayerMoveC2SPacket.Full(
                     stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5,
                     yaw, pitch,
@@ -130,8 +140,8 @@ public class SongHandler {
 
     public void sendMovementPacketToStagePosition() {
         AbstractClientPlayerEntity entity;
-        if (SongPlayer.fakePlayer != null) {
-            entity = SongPlayer.fakePlayer;
+        if (fakePlayer != null) {
+            entity = fakePlayer;
         } else {
             entity = getPlayer();
         }
@@ -215,7 +225,7 @@ public class SongHandler {
         loadedSong = null;
         songQueue.clear();
         stageBuilder.position = null;
-        SongPlayer.removeFakePlayer();
+        removeFakePlayer();
     }
 
     public void restoreStateAndCleanUp() {
@@ -272,9 +282,6 @@ public class SongHandler {
         } else {
             sendMovementPacketToStagePosition();
         }
-
-        stageBuilder.getAndSaveBuildSlot();
-        SongPlayer.addChatMessage("§6Building noteblocks");
     }
 
     ClientPlayerInteractionManager getInteractionManager() {
