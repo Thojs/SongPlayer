@@ -23,13 +23,13 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class StageBuilder {
-	public boolean isBuilding = false;
+	private boolean isBuilding = false;
 	
 	public BlockPos position = null;
 	public HashMap<Integer, BlockPos> noteblockPositions = new HashMap<>();
 
 	private LinkedList<BlockPos> requiredBreaks = new LinkedList<>();
-	public TreeSet<Integer> missingNotes = new TreeSet<>();
+	private final TreeSet<Integer> missingNotes = new TreeSet<>();
 	private int totalMissingNotes = 0;
 
 	private static final int TOTAL_PITCHES = NoteBlock.NOTE.getValues().size(); // total amount of pitches available in base game.
@@ -62,7 +62,7 @@ public class StageBuilder {
 				return;
 			}
 
-			checkBuildStatus(handler.getLoadedSong());
+			checkBuildStatus();
 		}
 
 		if (buildSlot == -1) {
@@ -77,6 +77,7 @@ public class StageBuilder {
 				BlockPos bp = requiredBreaks.poll();
 				handler.attackBlock(bp);
 			}
+
 			buildEndDelay = 20;
 			return;
 		}
@@ -108,21 +109,32 @@ public class StageBuilder {
 		SongPlayer.addChatMessage("§6Now playing §3" + handler.getLoadedSong().name);
 	}
 
-	private void setBuildProgressDisplay() {
-		MutableText buildText;
+	public void needsToBuild(boolean forceCheck) {
+		if (isBuilding) return;
 
-		if (handler.getGameMode() != GameMode.CREATIVE) {
-			buildText = Text.literal("Waiting for creative mode").formatted(Formatting.RED);
-		} else {
-			buildText = Text.empty()
-					.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
-					.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
+		if (forceCheck || hasBreakingModification()) {
+			checkBuildStatus();
 		}
 
-		ProgressDisplay.instance.setText(buildText, Text.empty());
+		if (nothingToBuild()) return;
+
+		// Switch to building.
+		isBuilding = true;
+		handler.setCreativeIfNeeded();
+		handler.getLoadedSong().pause();
+		buildStartDelay = 20;
 	}
 
-	public void checkBuildStatus(Song song) {
+	private void setBuildProgressDisplay() {
+		MutableText buildText = Text.empty()
+					.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
+					.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
+
+		ProgressDisplay.instance.setText(buildText, handler.getGameMode() != GameMode.CREATIVE ? Text.literal("Waiting for creative mode").formatted(Formatting.RED) : Text.empty());
+	}
+
+	public void checkBuildStatus() {
+		Song song = handler.getLoadedSong();
 		noteblockPositions.clear();
 		missingNotes.clear();
 
@@ -300,8 +312,13 @@ public class StageBuilder {
 		tag.put("BlockStateTag", bsTag);
 		nbt.put("tag", tag);
 
-		ItemStack noteblockStack = ItemStack.fromNbt(nbt);
-		inventory.main.set(buildSlot, noteblockStack);
-		handler.getInteractionManager().clickCreativeStack(noteblockStack, 36 + buildSlot);
+		ItemStack noteBlockStack = ItemStack.fromNbt(nbt);
+		inventory.main.set(buildSlot, noteBlockStack);
+		handler.getInteractionManager().clickCreativeStack(noteBlockStack, 36 + buildSlot);
+	}
+
+	// Accessors
+	public boolean isBuilding() {
+		return isBuilding;
 	}
 }

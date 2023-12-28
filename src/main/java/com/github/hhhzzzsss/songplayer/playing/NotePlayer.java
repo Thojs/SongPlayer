@@ -1,6 +1,5 @@
 package com.github.hhhzzzsss.songplayer.playing;
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.github.hhhzzzsss.songplayer.song.*;
 import net.minecraft.text.MutableText;
@@ -27,22 +26,6 @@ public class NotePlayer {
             return;
         }
 
-        //todo move this to song handler
-        if (tick) {
-            if (stageBuilder.hasBreakingModification()) {
-                stageBuilder.checkBuildStatus(currentSong);
-            }
-
-            if (!stageBuilder.nothingToBuild()) { // Switch to building
-                stageBuilder.isBuilding = true;
-                handler.setCreativeIfNeeded();
-                currentSong.pause();
-                stageBuilder.buildStartDelay = 20;
-                SongPlayer.addChatMessage("§6Stage was altered. Rebuilding!");
-                return;
-            }
-        }
-
         currentSong.play();
 
         // Play note blocks
@@ -51,10 +34,10 @@ public class NotePlayer {
         while (currentSong.reachedNextNote()) {
             Note note = currentSong.getNextNote();
             BlockPos bp = stageBuilder.noteblockPositions.get(note.noteId);
-            if (bp != null) {
-                handler.attackBlock(bp);
-                somethingPlayed = true;
-            }
+            if (bp == null) continue;
+
+            handler.attackBlock(bp);
+            somethingPlayed = true;
         }
         if (somethingPlayed) handler.stopAttack();
     }
@@ -78,6 +61,6 @@ public class NotePlayer {
             }
         }
 
-        ProgressDisplay.instance.setText(songText, Text.empty());
+        ProgressDisplay.instance.setText(songText, handler.getGameMode() != GameMode.SURVIVAL ? Text.literal("Waiting for survival mode").formatted(Formatting.RED) : Text.empty());
     }
 }

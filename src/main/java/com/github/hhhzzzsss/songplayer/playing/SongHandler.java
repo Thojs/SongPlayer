@@ -78,8 +78,11 @@ public class SongHandler {
         getAbilities().allowFlying = true;
         wasFlying = getAbilities().flying;
 
+        // Check if stage needs to be modified.
+        stageBuilder.needsToBuild(false);
+
         // Execute building / playing.
-        if (stageBuilder.isBuilding) {
+        if (stageBuilder.isBuilding()) {
             stageBuilder.handleBuilding(tick);
         } else {
             notePlayer.handlePlaying(tick);
@@ -280,10 +283,6 @@ public class SongHandler {
             return;
         }
 
-        // todo move this to stageBuilder & check stage before executing creative command.
-        stageBuilder.isBuilding = true;
-        setCreativeIfNeeded();
-
         if (Config.getConfig().doAnnouncement) {
             sendMessage(Config.getConfig().announcementMessage.replaceAll("\\[name]", song.name));
         }
@@ -294,6 +293,9 @@ public class SongHandler {
         } else {
             sendMovementPacketToStagePosition();
         }
+
+        // Check if stage needs to be modified.
+        stageBuilder.needsToBuild(true);
 
         isActive = true;
     }
