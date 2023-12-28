@@ -29,7 +29,7 @@ public class ClientCommonNetworkHandlerMixin {
     private void onSendPacket(Packet<?> packet, CallbackInfo ci) {
         FakePlayerEntity fakePlayer = SongHandler.fakePlayer;
 
-        if (SongHandler.instance.isPlaying() && packet instanceof PlayerMoveC2SPacket) {
+        if (SongHandler.instance.isActive() && packet instanceof PlayerMoveC2SPacket) {
             ci.cancel();
 
             if (Config.getConfig().rotate) return;

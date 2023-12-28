@@ -9,7 +9,6 @@ import com.github.hhhzzzsss.songplayer.stage.StageType;
 import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.NoteBlock;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
@@ -18,7 +17,6 @@ import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.GameMode;
 
 import java.util.*;
@@ -64,8 +62,7 @@ public class StageBuilder {
 				return;
 			}
 
-			checkBuildStatus(handler.loadedSong);
-			handler.sendMovementPacketToStagePosition();
+			checkBuildStatus(handler.getLoadedSong());
 		}
 
 		if (buildSlot == -1) {
@@ -108,25 +105,21 @@ public class StageBuilder {
 		restoreBuildSlot();
 		isBuilding = false;
 		handler.setSurvivalIfNeeded();
-		handler.sendMovementPacketToStagePosition();
-		SongPlayer.addChatMessage("§6Now playing §3" + handler.loadedSong.name);
+		SongPlayer.addChatMessage("§6Now playing §3" + handler.getLoadedSong().name);
 	}
 
 	private void setBuildProgressDisplay() {
-		MutableText buildText = Text.empty()
-				.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
-				.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
+		MutableText buildText;
+
+		if (handler.getGameMode() != GameMode.CREATIVE) {
+			buildText = Text.literal("Waiting for creative mode").formatted(Formatting.RED);
+		} else {
+			buildText = Text.empty()
+					.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
+					.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
+		}
+
 		ProgressDisplay.instance.setText(buildText, Text.empty());
-	}
-	
-	public void movePlayerToStagePosition() {
-		if (position == null) return;
-		ClientPlayerEntity player = handler.getPlayer();
-		player.getAbilities().allowFlying = true;
-		player.getAbilities().flying = true;
-		player.refreshPositionAndAngles(position.getX() + 0.5, position.getY() + 0.0, position.getZ() + 0.5, player.getYaw(), player.getPitch());
-		player.setVelocity(Vec3d.ZERO);
-		handler.sendMovementPacketToStagePosition();
 	}
 
 	public void checkBuildStatus(Song song) {

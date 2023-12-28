@@ -28,7 +28,7 @@ class QueueCommand extends Command {
             }
 
             SongPlayer.addChatMessage("§6------------------------------");
-            SongPlayer.addChatMessage("§6Current song: §3" + instance.loadedSong.name);
+            SongPlayer.addChatMessage("§6Current song: §3" + instance.getLoadedSong().name);
 
             int index = 0;
             for (Song song : instance.getSongQueue().getQueue()) {

@@ -21,7 +21,7 @@ class StopCommand extends Command {
         SongHandler instance = SongHandler.instance;
 
         node.executes(context -> {
-            if (!instance.isPlaying()) {
+            if (instance.getSongQueue().isEmpty()) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }

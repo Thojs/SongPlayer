@@ -29,9 +29,9 @@ public class SongHandler {
 
     public static FakePlayerEntity fakePlayer;
 
-    private boolean isPlaying = false;
+    private boolean isActive = false;
 
-    public Song loadedSong = null;
+    private Song loadedSong = null;
 
     private GameMode originalGamemode = GameMode.CREATIVE;
     public boolean wasFlying = false;
@@ -68,7 +68,7 @@ public class SongHandler {
         // Set stage position if none is set.
         if (stageBuilder.position == null) {
             stageBuilder.position = getPlayer().getBlockPos();
-            stageBuilder.movePlayerToStagePosition();
+            movePlayerToStagePosition();
         }
 
         // Fake player synchronization
@@ -98,7 +98,6 @@ public class SongHandler {
         }
 
         if (fakePlayer != null) fakePlayer.syncWithPlayer();
-
     }
 
     public static void removeFakePlayer() {
@@ -138,7 +137,7 @@ public class SongHandler {
         }
     }
 
-    public void sendMovementPacketToStagePosition() {
+    private void sendMovementPacketToStagePosition() {
         AbstractClientPlayerEntity entity;
         if (fakePlayer != null) {
             entity = fakePlayer;
@@ -152,6 +151,17 @@ public class SongHandler {
                 stageBuilder.position.getX() + 0.5, stageBuilder.position.getY(), stageBuilder.position.getZ() + 0.5,
                 entity.getYaw(), entity.getPitch(),
                 true));
+    }
+
+    private void movePlayerToStagePosition() {
+        BlockPos position = stageBuilder.position;
+        if (position == null) return;
+        ClientPlayerEntity player = getPlayer();
+        player.getAbilities().allowFlying = true;
+        player.getAbilities().flying = true;
+        player.refreshPositionAndAngles(position.getX() + 0.5, position.getY() + 0.0, position.getZ() + 0.5, player.getYaw(), player.getPitch());
+        player.setVelocity(Vec3d.ZERO);
+        sendMovementPacketToStagePosition();
     }
 
     // Commands / messages
@@ -221,7 +231,7 @@ public class SongHandler {
 
     // Cleanup
     public void cleanup() {
-        isPlaying = false;
+        isActive = false;
         loadedSong = null;
         songQueue.clear();
         stageBuilder.position = null;
@@ -229,7 +239,7 @@ public class SongHandler {
     }
 
     public void restoreStateAndCleanUp() {
-        stageBuilder.movePlayerToStagePosition();
+        movePlayerToStagePosition();
         stageBuilder.restoreBuildSlot();
 
         if (originalGamemode != getGameMode()) {
@@ -248,12 +258,16 @@ public class SongHandler {
         return songQueue;
     }
 
-    public boolean isPlaying() {
-        return isPlaying;
+    public boolean isActive() {
+        return isActive;
     }
 
     public BlockPos getStagePosition() {
         return stageBuilder.position;
+    }
+
+    public Song getLoadedSong() {
+        return loadedSong;
     }
 
     // Other
@@ -266,8 +280,6 @@ public class SongHandler {
             return;
         }
 
-        isPlaying = true;
-
         // todo move this to stageBuilder & check stage before executing creative command.
         stageBuilder.isBuilding = true;
         setCreativeIfNeeded();
@@ -278,10 +290,12 @@ public class SongHandler {
 
         if (stageBuilder.position == null) {
             stageBuilder.position = getPlayer().getBlockPos();
-            stageBuilder.movePlayerToStagePosition();
+            movePlayerToStagePosition();
         } else {
             sendMovementPacketToStagePosition();
         }
+
+        isActive = true;
     }
 
     ClientPlayerInteractionManager getInteractionManager() {

@@ -21,13 +21,13 @@ class GotoCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.then(ClientCommandManager.argument("time", TimestampArgumentType.timestamp()).executes(context -> {
-            if (SongHandler.instance.loadedSong == null) {
+            if (SongHandler.instance.getSongQueue().isEmpty()) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
             long time = context.getArgument("time", Long.class);
-            SongHandler.instance.loadedSong.setTime(time);
+            SongHandler.instance.getLoadedSong().setTime(time);
             SongPlayer.addChatMessage("§6Set song time to §3" + Util.formatTime(time));
 
             return 1;

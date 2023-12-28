@@ -21,12 +21,12 @@ class StatusCommand extends Command {
     @Override
     public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
         node.executes(context -> {
-            Song currentSong = SongHandler.instance.loadedSong;
-            if (currentSong == null) {
+            if (SongHandler.instance.getSongQueue().isEmpty()) {
                 SongPlayer.addChatMessage("§6No song is currently playing");
                 return 1;
             }
 
+            Song currentSong = SongHandler.instance.getLoadedSong();
             long currentTime = Math.min(currentSong.time, currentSong.length);
             long totalTime = currentSong.length;
 

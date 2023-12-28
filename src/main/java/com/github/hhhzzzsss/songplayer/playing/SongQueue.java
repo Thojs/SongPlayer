@@ -22,12 +22,16 @@ public class SongQueue {
 
     public void clear() {
         currentSong = null;
+        clearQueue();
+    }
+
+    public void clearQueue() {
         songQueue.clear();
     }
 
     // Accessors
     public List<Song> getQueue() {
-        return songQueue;
+        return List.copyOf(songQueue);
     }
 
     public Song getCurrentSong() {

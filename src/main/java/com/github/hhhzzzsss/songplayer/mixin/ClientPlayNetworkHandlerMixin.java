@@ -26,8 +26,8 @@ public class ClientPlayNetworkHandlerMixin {
 	@Inject(at = @At("TAIL"), method = "onPlayerAbilities(Lnet/minecraft/network/packet/s2c/play/PlayerAbilitiesS2CPacket;)V")
 	public void onOnPlayerAbilities(PlayerAbilitiesS2CPacket packet, CallbackInfo ci) {
 		SongHandler handler = SongHandler.instance;
-		if (handler.loadedSong != null || !handler.getSongQueue().isEmpty()) {
-			SongPlayer.MC.player.getAbilities().flying = handler.wasFlying;
-		}
+		if (handler.getSongQueue().isEmpty()) return;
+
+		SongPlayer.MC.player.getAbilities().flying = handler.wasFlying;
 	}
 }

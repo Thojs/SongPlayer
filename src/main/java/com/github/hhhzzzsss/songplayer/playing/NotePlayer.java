@@ -16,12 +16,11 @@ public class NotePlayer {
         this.handler = handler;
     }
 
-    // Runs every frame
     void handlePlaying(boolean tick) {
         if (tick) setPlayProgressDisplay();
 
         StageBuilder stageBuilder = handler.stageBuilder;
-        Song currentSong = handler.loadedSong;
+        Song currentSong = handler.getLoadedSong();
 
         if (handler.getGameMode() != GameMode.SURVIVAL) {
             currentSong.pause();
@@ -37,7 +36,6 @@ public class NotePlayer {
             if (!stageBuilder.nothingToBuild()) { // Switch to building
                 stageBuilder.isBuilding = true;
                 handler.setCreativeIfNeeded();
-                handler.sendMovementPacketToStagePosition();
                 currentSong.pause();
                 stageBuilder.buildStartDelay = 20;
                 SongPlayer.addChatMessage("§6Stage was altered. Rebuilding!");
@@ -62,7 +60,7 @@ public class NotePlayer {
     }
 
     private void setPlayProgressDisplay() {
-        Song currentSong = handler.loadedSong;
+        Song currentSong = handler.getLoadedSong();
         long currentTime = Math.min(currentSong.time, currentSong.length);
         long totalTime = currentSong.length;
 
