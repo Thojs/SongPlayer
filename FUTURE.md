@@ -7,4 +7,5 @@
 - Decrease suggestion length of big paths.
 - Kotlin?
 - Playlist functionality.
-- move config to `.minecraft/config` (fabric stuff?)
+- won't go to survival mode if stage is already ready.
+- playing state breaks in singleplayer?

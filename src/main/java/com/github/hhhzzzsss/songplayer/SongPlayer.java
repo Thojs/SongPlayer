@@ -25,6 +25,7 @@ import net.minecraft.util.Identifier;
 import java.nio.file.Path;
 
 public class SongPlayer implements ModInitializer {
+	public static final String MOD_ID = "songplayer";
 	public static final MinecraftClient MC = MinecraftClient.getInstance();
 
 	public static final Path SONGPLAYER_DIR = Path.of("SongPlayer");

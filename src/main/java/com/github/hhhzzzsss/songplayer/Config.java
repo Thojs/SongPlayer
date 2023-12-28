@@ -1,6 +1,7 @@
 package com.github.hhhzzzsss.songplayer;
 
 import com.google.gson.Gson;
+import net.fabricmc.loader.api.FabricLoader;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -11,7 +12,7 @@ import java.nio.file.Path;
 public class Config {
     private static Config config = null;
 
-    private static final Path CONFIG_FILE = SongPlayer.SONGPLAYER_DIR.resolve("config.json");
+    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve(SongPlayer.MOD_ID + ".json");
     private static final Gson gson = new Gson();
 
     // Values
