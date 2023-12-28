@@ -59,7 +59,7 @@ class SongsCommand extends Command {
                     .collect(Collectors.toList());
             songs = Files.list(path)
                     .filter(Files::isRegularFile)
-                    .filter((filePath) -> SongParserRegistry.instance.supportsExtension(FileNameUtils.getExtension(path)))
+                    .filter((filePath) -> SongParserRegistry.instance.supportsExtension(FileNameUtils.getExtension(filePath)))
                     .map(Path::getFileName)
                     .map(Path::toString)
                     .collect(Collectors.toList());
