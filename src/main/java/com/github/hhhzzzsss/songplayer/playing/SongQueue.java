@@ -15,6 +15,11 @@ public class SongQueue {
     private SongLoaderThread loaderThread = null;
 
     // Playback
+    public void forcePlay(Song song) {
+        if (song == null) throw new IllegalArgumentException("song cannot be null.");
+        currentSong = song;
+    }
+
     public void next() {
         currentSong = null;
         checkSong();

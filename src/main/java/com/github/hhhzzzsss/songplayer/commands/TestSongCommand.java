@@ -25,7 +25,7 @@ class TestSongCommand extends Command {
                 song.add(new Note(i, i*50));
             }
             song.length = 400*50;
-            SongHandler.instance.setSong(song);
+            SongHandler.instance.getSongQueue().forcePlay(song);
 
             return 1;
         });
