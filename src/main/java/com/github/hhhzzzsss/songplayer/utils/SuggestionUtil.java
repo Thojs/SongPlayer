@@ -121,7 +121,7 @@ public class SuggestionUtil {
         ArrayList<String> suggestionsList = new ArrayList<>();
         for (Path path : songFiles.toList()) {
             if (Files.isRegularFile(path)) {
-                if (!SongParserRegistry.instance.getSupportedFileExtensions().contains(FileNameUtils.getExtension(path))) continue;
+                if (!SongParserRegistry.instance.supportsExtension(FileNameUtils.getExtension(path))) continue;
                 suggestionsList.add(dirString + path.getFileName().toString());
             } else if (Files.isDirectory(path)) {
                 suggestionsList.add(dirString + path.getFileName().toString() + "/");

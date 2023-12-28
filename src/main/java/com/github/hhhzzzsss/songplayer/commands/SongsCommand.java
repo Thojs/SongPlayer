@@ -1,11 +1,14 @@
 package com.github.hhhzzzsss.songplayer.commands;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
+import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
 import com.github.hhhzzzsss.songplayer.utils.SuggestionUtil;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
 import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.commons.io.FileUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -56,6 +59,7 @@ class SongsCommand extends Command {
                     .collect(Collectors.toList());
             songs = Files.list(path)
                     .filter(Files::isRegularFile)
+                    .filter((filePath) -> SongParserRegistry.instance.supportsExtension(FileNameUtils.getExtension(path)))
                     .map(Path::getFileName)
                     .map(Path::toString)
                     .collect(Collectors.toList());

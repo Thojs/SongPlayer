@@ -67,7 +67,7 @@ public class SongParserRegistry {
         sortedMIMEParserList = sorted;
     }
 
-    public List<String> getSupportedFileExtensions() {
-        return supportedFileExtensions;
+    public boolean supportsExtension(String extension) {
+        return supportedFileExtensions.contains(extension);
     }
 }
