@@ -1,47 +1,51 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.mojang.brigadier.StringReader;
-import com.mojang.brigadier.arguments.ArgumentType;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.text.Text;
+import com.mojang.brigadier.StringReader
+import com.mojang.brigadier.arguments.ArgumentType
+import com.mojang.brigadier.exceptions.CommandSyntaxException
+import com.mojang.brigadier.exceptions.SimpleCommandExceptionType
+import net.minecraft.text.Text
+import java.util.regex.Pattern
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
-public class TimestampArgumentType implements ArgumentType<Long> {
-    private static final Pattern timePattern = Pattern.compile("(?:(\\d+):)?(\\d+):(\\d+)");
-
-    public static TimestampArgumentType timestamp() {
-        return new TimestampArgumentType();
+class TimestampArgumentType : ArgumentType<Long> {
+    private fun isAllowedCharacter(character: Char): Boolean {
+        return Character.isDigit(character) || character == ':'
     }
 
-    private boolean isAllowedCharacter(char character) {
-        return Character.isDigit(character) || character == ':';
-    }
-
-    @Override
-    public Long parse(StringReader reader) throws CommandSyntaxException {
-        StringBuilder str = new StringBuilder();
+    @Throws(CommandSyntaxException::class)
+    override fun parse(reader: StringReader): Long {
+        val str = StringBuilder()
 
         while (reader.canRead() && isAllowedCharacter(reader.peek())) {
-            str.append(reader.read());
+            str.append(reader.read())
         }
 
-        Matcher matcher = timePattern.matcher(str.toString());
+        val matcher = timePattern.matcher(str.toString())
         if (matcher.matches()) {
-            long time = 0;
-            String hourString = matcher.group(1);
-            String minuteString = matcher.group(2);
-            String secondString = matcher.group(3);
+            var time: Long = 0
+            val hourString = matcher.group(1)
+            val minuteString = matcher.group(2)
+            val secondString = matcher.group(3)
             if (hourString != null) {
-                time += (long) Integer.parseInt(hourString) * 60 * 60 * 1000;
+                time += hourString.toInt().toLong() * 60 * 60 * 1000
             }
-            time += (long) Integer.parseInt(minuteString) * 60 * 1000;
-            time += (long) (Double.parseDouble(secondString) * 1000.0);
-            return time;
-        } else {
-            throw new CommandSyntaxException(new SimpleCommandExceptionType(Text.literal("a")), Text.literal("Not a valid time stamp"));
+            time += minuteString.toInt().toLong() * 60 * 1000
+            time += (secondString.toDouble() * 1000.0).toLong()
+            return time
+        }
+
+        throw CommandSyntaxException(
+            SimpleCommandExceptionType(Text.literal("Invalid timestamp provided")),
+            Text.literal("Not a valid time stamp")
+        )
+    }
+
+    companion object {
+        private val timePattern: Pattern = Pattern.compile("(?:(\\d+):)?(\\d+):(\\d+)")
+
+        @JvmStatic
+        fun timestamp(): TimestampArgumentType {
+            return TimestampArgumentType()
         }
     }
 }

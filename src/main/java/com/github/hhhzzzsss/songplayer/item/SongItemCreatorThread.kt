@@ -1,50 +1,45 @@
-package com.github.hhhzzzsss.songplayer.item;
+package com.github.hhhzzzsss.songplayer.item
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.conversion.SPParser;
-import com.github.hhhzzzsss.songplayer.song.SongLoaderThread;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.Items;
-import net.minecraft.text.Text;
-import net.minecraft.util.Hand;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.io.SPParser
+import com.github.hhhzzzsss.songplayer.item.SongItemUtils.createSongItem
+import com.github.hhhzzzsss.songplayer.song.SongLoaderThread
+import net.minecraft.item.Items
+import net.minecraft.text.Text
+import net.minecraft.util.Hand
+import java.io.IOException
 
-import java.io.IOException;
+class SongItemCreatorThread(location: String?) : SongLoaderThread(location) {
+    val slotId = SongPlayer.MC.player!!.inventory.selectedSlot
+    val stack = SongPlayer.MC.player!!.inventory.getStack(slotId)
 
-public class SongItemCreatorThread extends SongLoaderThread {
-    public final int slotId;
-    public final ItemStack stack;
-    public SongItemCreatorThread(String location) throws IOException {
-        super(location);
-        this.slotId = SongPlayer.MC.player.getInventory().selectedSlot;
-        this.stack = SongPlayer.MC.player.getInventory().getStack(slotId);
-    }
+    override fun run() {
+        super.run()
 
-    @Override
-    public void run() {
-        super.run();
-        byte[] songData;
+        val songData: ByteArray
         try {
-            songData = SPParser.getBytesFromSong(song);
-        } catch (IOException e) {
-            SongPlayer.addChatMessage("§cError creating song item: §4" + e.getMessage());
-            return;
+            songData = SPParser.getBytesFromSong(song)
+        } catch (e: IOException) {
+            SongPlayer.addChatMessage("§cError creating song item: §4" + e.message)
+            return
         }
-        SongPlayer.MC.execute(() -> {
-            if (SongPlayer.MC.world == null) return;
 
-            if (!SongPlayer.MC.player.getInventory().getStack(slotId).equals(stack)) {
-                SongPlayer.addChatMessage("§cCould not create song item because item has moved");
+        SongPlayer.MC.execute {
+            if (SongPlayer.MC.world == null) return@execute
+
+            if (SongPlayer.MC.player!!.inventory.getStack(slotId) != stack) {
+                SongPlayer.addChatMessage("§cCould not create song item because item has moved")
             }
-            ItemStack newStack;
-            if (stack.isEmpty()) {
-                newStack = Items.PAPER.getDefaultStack();
-            } else {
-                newStack = stack.copy();
-            }
-            newStack = SongItemUtils.createSongItem(newStack, songData, filename, song.name);
-            SongPlayer.MC.player.getInventory().setStack(slotId, newStack);
-            SongPlayer.MC.interactionManager.clickCreativeStack(SongPlayer.MC.player.getStackInHand(Hand.MAIN_HAND), 36 + slotId);
-            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3" + song.name));
-        });
+
+            var newStack = if (stack.isEmpty) Items.PAPER.defaultStack else stack.copy()
+
+            newStack = createSongItem(newStack, songData, filename, song.name)
+            SongPlayer.MC.player!!.inventory.setStack(slotId, newStack)
+            SongPlayer.MC.interactionManager!!.clickCreativeStack(
+                SongPlayer.MC.player!!.getStackInHand(Hand.MAIN_HAND),
+                36 + slotId
+            )
+            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3" + song.name))
+        }
     }
 }

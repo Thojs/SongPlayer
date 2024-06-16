@@ -1,12 +1,12 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
-abstract class Command {
-    public abstract String getName();
+interface Command {
+    val name: String
 
-    public abstract String getDescription();
+    val description: String
 
-    public abstract void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node);
+    fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>)
 }

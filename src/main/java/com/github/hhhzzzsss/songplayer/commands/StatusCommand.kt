@@ -1,38 +1,36 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.utils.Util;
-import com.github.hhhzzzsss.songplayer.song.Song;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.playing.SongHandler
+import com.github.hhhzzzsss.songplayer.utils.Util
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
+import kotlin.math.min
 
-class StatusCommand extends Command {
-    @Override
-    public String getName() {
-        return "status";
-    }
+internal class StatusCommand : Command {
+    override val name = "status"
 
-    @Override
-    public String getDescription() {
-        return "Gets the status of the song that is currently playing";
-    }
+    override val description = "Gets the status of the song that is currently playing"
 
-    @Override
-    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        node.executes(context -> {
-            if (SongHandler.instance.getSongQueue().isEmpty()) {
-                SongPlayer.addChatMessage("§6No song is currently playing");
-                return 1;
+    override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        node.executes {
+            if (SongHandler.instance.songQueue.isEmpty) {
+                SongPlayer.addChatMessage("§6No song is currently playing")
+                return@executes 1
             }
 
-            Song currentSong = SongHandler.instance.getLoadedSong();
-            long currentTime = Math.min(currentSong.time, currentSong.length);
-            long totalTime = currentSong.length;
+            val currentSong = SongHandler.instance.loadedSong
+            val currentTime = min(currentSong.time.toDouble(), currentSong.length.toDouble()).toLong()
+            val totalTime = currentSong.length
 
-            SongPlayer.addChatMessage(String.format("§6Currently playing %s §3(%s/%s)", currentSong.name, Util.formatTime(currentTime), Util.formatTime(totalTime)));
+            SongPlayer.addChatMessage(String.format(
+                "§6Currently playing %s §3(%s/%s)",
+                currentSong.name,
+                Util.formatTime(currentTime),
+                Util.formatTime(totalTime)
+            ))
 
-            return 1;
-        });
+            1
+        }
     }
 }

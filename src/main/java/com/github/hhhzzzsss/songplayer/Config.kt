@@ -1,71 +1,81 @@
-package com.github.hhhzzzsss.songplayer;
+package com.github.hhhzzzsss.songplayer
 
-import com.google.gson.Gson;
-import net.fabricmc.loader.api.FabricLoader;
+import com.google.gson.Gson
+import net.fabricmc.loader.api.FabricLoader
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-
-public class Config {
-    private static Config config = null;
-
-    private static final Path CONFIG_FILE = FabricLoader.getInstance().getConfigDir().resolve(SongPlayer.MOD_ID + ".json");
-    private static final Gson gson = new Gson();
-
+class Config {
     // Values
-    public String creativeCommand = "gamemode creative";
-    public String survivalCommand = "gamemode survival";
+    @JvmField
+    var creativeCommand: String = "gamemode creative"
+    @JvmField
+    var survivalCommand: String = "gamemode survival"
 
-    public boolean showFakePlayer = true;
+    @JvmField
+    var showFakePlayer: Boolean = true
 
-    public String stageType = "default";
+    @JvmField
+    var stageType: String = "default"
 
-    public boolean swing = false;
-    public boolean rotate = false;
+    @JvmField
+    var swing: Boolean = false
+    @JvmField
+    var rotate: Boolean = false
 
-    public boolean doAnnouncement = false;
-    public String announcementMessage = "&6Now playing: &3[name]";
+    @JvmField
+    var doAnnouncement: Boolean = false
+    @JvmField
+    var announcementMessage: String = "&6Now playing: &3[name]"
 
-    public static Config getConfig() {
-        if (config == null) {
-            config = new Config();
+    companion object {
+        private var config: Config? = null
+
+        private val CONFIG_FILE: Path = FabricLoader.getInstance().configDir.resolve(SongPlayer.MOD_ID + ".json")
+        private val gson = Gson()
+
+        @JvmStatic
+        fun getConfig(): Config {
+            if (config != null) return config!!
+
+            config = Config()
             try {
                 if (Files.exists(CONFIG_FILE)) {
-                    loadConfig();
+                    loadConfig()
                 } else {
-                    saveConfig();
+                    saveConfig()
                 }
-            } catch (IOException e) {
-                e.printStackTrace();
+            } catch (e: IOException) {
+                e.printStackTrace()
             }
+
+            return config!!
         }
 
-        return config;
-    }
+        @Throws(IOException::class)
+        fun loadConfig() {
+            val reader = Files.newBufferedReader(CONFIG_FILE)
+            config = gson.fromJson(reader, Config::class.java)
+            reader.close()
+        }
 
-    public static void loadConfig() throws IOException {
-        BufferedReader reader = Files.newBufferedReader(CONFIG_FILE);
-        config = gson.fromJson(reader, Config.class);
-        reader.close();
-    }
+        @Throws(IOException::class)
+        fun saveConfig() {
+            val writer = Files.newBufferedWriter(CONFIG_FILE)
+            writer.write(gson.toJson(config))
+            writer.close()
+        }
 
-    public static void saveConfig() throws IOException {
-        BufferedWriter writer = Files.newBufferedWriter(CONFIG_FILE);
-        writer.write(gson.toJson(config));
-        writer.close();
-    }
-
-    public static void saveConfigWithErrorHandling() {
-        try {
-            Config.saveConfig();
-        } catch (IOException e) {
-            if (SongPlayer.MC.world != null) {
-                SongPlayer.addChatMessage("§cFailed to save config file");
+        fun saveConfigWithErrorHandling() {
+            try {
+                saveConfig()
+            } catch (e: IOException) {
+                if (SongPlayer.MC.world != null) {
+                    SongPlayer.addChatMessage("§cFailed to save config file")
+                }
+                e.printStackTrace()
             }
-            e.printStackTrace();
         }
     }
 }

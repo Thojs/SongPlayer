@@ -1,123 +1,120 @@
-package com.github.hhhzzzsss.songplayer.utils;
+package com.github.hhhzzzsss.songplayer.utils
 
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.nbt.NbtString;
-import net.minecraft.text.PlainTextContent;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
+import net.minecraft.component.DataComponentTypes
+import net.minecraft.component.type.LoreComponent
+import net.minecraft.item.ItemStack
+import net.minecraft.text.MutableText
+import net.minecraft.text.PlainTextContent
+import net.minecraft.text.Style
+import net.minecraft.text.Text
+import java.io.IOException
+import java.io.InputStream
+import java.nio.file.Files
+import java.nio.file.InvalidPathException
+import java.nio.file.Path
+import java.text.CharacterIterator
+import java.text.StringCharacterIterator
+import kotlin.math.abs
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
-import java.text.CharacterIterator;
-import java.text.StringCharacterIterator;
-
-public class Util {
-    private Util() {}
-
-    public static void createDirectoriesSilently(Path path) {
+object Util {
+    @JvmStatic
+    fun createDirectoriesSilently(path: Path) {
         try {
-            Files.createDirectories(path);
-        } catch (IOException ignored) {}
+            Files.createDirectories(path)
+        } catch (ignored: IOException) {
+        }
     }
 
-    public static Path resolveWithIOException(Path path, String other) throws IOException {
+    @JvmStatic
+    @Throws(IOException::class)
+    fun resolveWithIOException(path: Path, other: String): Path {
         try {
-            return path.resolve(other);
-        }
-        catch (InvalidPathException e) {
-            throw new IOException(e.getMessage());
-        }
-    }
-
-    public static class LimitedSizeInputStream extends InputStream {
-        private final InputStream original;
-        private final long maxSize;
-        private long total;
-
-        public LimitedSizeInputStream(InputStream original, long maxSize) {
-            this.original = original;
-            this.maxSize = maxSize;
-        }
-
-        @Override
-        public int read() throws IOException {
-            int i = original.read();
-            if (i>=0) incrementCounter(1);
-            return i;
-        }
-
-        @Override
-        public int read(byte[] b) throws IOException {
-            return read(b, 0, b.length);
-        }
-
-        @Override
-        public int read(byte[] b, int off, int len) throws IOException {
-            int i = original.read(b, off, len);
-            if (i>=0) incrementCounter(i);
-            return i;
-        }
-
-        private void incrementCounter(int size) throws IOException {
-            total += size;
-            if (total>maxSize) throw new IOException("Input stream exceeded maximum size of " + maxSize + " bytes");
+            return path.resolve(other)
+        } catch (e: InvalidPathException) {
+            throw IOException(e.message)
         }
     }
 
-    public static String formatTime(long milliseconds) {
-        long temp = Math.abs(milliseconds);
-        temp /= 1000;
-        long seconds = temp % 60;
-        temp /= 60;
-        long minutes = temp % 60;
-        temp /= 60;
-        long hours = temp;
-        StringBuilder sb = new StringBuilder();
+    @JvmStatic
+    fun formatTime(milliseconds: Long): String {
+        var temp = abs(milliseconds.toDouble()).toLong()
+        temp /= 1000
+        val seconds = temp % 60
+        temp /= 60
+        val minutes = temp % 60
+        temp /= 60
+        val hours = temp
+        val sb = StringBuilder()
         if (milliseconds < 0) {
-            sb.append("-");
+            sb.append("-")
         }
         if (hours > 0) {
-            sb.append(String.format("%d:", hours));
-            sb.append(String.format("%02d:", minutes));
+            sb.append(String.format("%d:", hours))
+            sb.append(String.format("%02d:", minutes))
         } else {
-            sb.append(String.format("%d:", minutes));
+            sb.append(String.format("%d:", minutes))
         }
-        sb.append(String.format("%02d", seconds));
-        return sb.toString();
+        sb.append(String.format("%02d", seconds))
+        return sb.toString()
     }
 
-    public static MutableText getStyledText(String str, Style style) {
-        MutableText text = MutableText.of(PlainTextContent.of(str));
-        text.setStyle(style);
-        return text;
+    @JvmStatic
+    fun getStyledText(str: String, style: Style): MutableText {
+        val text = MutableText.of(PlainTextContent.of(str))
+        text.setStyle(style)
+        return text
     }
 
-    public static void setItemName(ItemStack stack, Text text) {
-        stack.getOrCreateSubNbt(ItemStack.DISPLAY_KEY).putString(ItemStack.NAME_KEY, Text.Serialization.toJsonString(text));
+    @JvmStatic
+    fun setItemName(stack: ItemStack, text: Text) {
+        stack.set(DataComponentTypes.ITEM_NAME, text)
     }
 
-    public static void setItemLore(ItemStack stack, Text... loreLines) {
-        NbtList lore = new NbtList();
-        for (Text line : loreLines) {
-            lore.add(NbtString.of(Text.Serialization.toJsonString(line)));
-        }
-        stack.getOrCreateSubNbt(ItemStack.DISPLAY_KEY).put(ItemStack.LORE_KEY, lore);
+    @JvmStatic
+    fun setItemLore(stack: ItemStack, vararg loreLines: Text?) {
+        stack.set(DataComponentTypes.LORE, LoreComponent(listOf(*loreLines)))
     }
 
-    public static String humanReadableByteCountSI(long bytes) {
+    @JvmStatic
+    fun humanReadableByteCountSI(bytes: Long): String {
+        var bytes = bytes
         if (-1000 < bytes && bytes < 1000) {
-            return bytes + " B";
+            return "$bytes B"
         }
-        CharacterIterator ci = new StringCharacterIterator("kMGTPE");
-        while (bytes <= -999_950 || bytes >= 999_950) {
-            bytes /= 1000;
-            ci.next();
+        val ci: CharacterIterator = StringCharacterIterator("kMGTPE")
+        while (bytes <= -999950 || bytes >= 999950) {
+            bytes /= 1000
+            ci.next()
         }
-        return String.format("%.1f %cB", bytes / 1000.0, ci.current());
+        return String.format("%.1f %cB", bytes / 1000.0, ci.current())
+    }
+
+    class LimitedSizeInputStream(private val original: InputStream, private val maxSize: Long) : InputStream() {
+        private var total: Long = 0
+
+        @Throws(IOException::class)
+        override fun read(): Int {
+            val i = original.read()
+            if (i >= 0) incrementCounter(1)
+            return i
+        }
+
+        @Throws(IOException::class)
+        override fun read(b: ByteArray): Int {
+            return read(b, 0, b.size)
+        }
+
+        @Throws(IOException::class)
+        override fun read(b: ByteArray, off: Int, len: Int): Int {
+            val i = original.read(b, off, len)
+            if (i >= 0) incrementCounter(i)
+            return i
+        }
+
+        @Throws(IOException::class)
+        private fun incrementCounter(size: Int) {
+            total += size.toLong()
+            if (total > maxSize) throw IOException("Input stream exceeded maximum size of $maxSize bytes")
+        }
     }
 }

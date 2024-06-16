@@ -1,137 +1,117 @@
-package com.github.hhhzzzsss.songplayer.utils;
+package com.github.hhhzzzsss.songplayer.utils
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
-import com.mojang.brigadier.suggestion.SuggestionProvider;
-import com.mojang.brigadier.suggestion.Suggestions;
-import com.mojang.brigadier.suggestion.SuggestionsBuilder;
-import net.minecraft.command.CommandSource;
-import org.apache.commons.compress.utils.FileNameUtils;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.io.SongParserRegistry.supportsExtension
+import com.mojang.brigadier.context.CommandContext
+import com.mojang.brigadier.suggestion.SuggestionProvider
+import com.mojang.brigadier.suggestion.Suggestions
+import com.mojang.brigadier.suggestion.SuggestionsBuilder
+import net.minecraft.command.CommandSource
+import org.apache.commons.compress.utils.FileNameUtils
+import java.io.IOException
+import java.nio.file.Files
+import java.nio.file.Path
+import java.util.concurrent.CompletableFuture
+import java.util.stream.Stream
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.concurrent.CompletableFuture;
-import java.util.stream.Stream;
-
-import static com.github.hhhzzzsss.songplayer.utils.Util.resolveWithIOException;
-
-public class SuggestionUtil {
-    public interface Suggestion {
-        CompletableFuture<Suggestions> giveSuggestions(SuggestionsBuilder builder);
-    }
-
-    public static <S> SuggestionProvider<S> safeSuggestions(Suggestion suggestion) {
-        return (context, builder) -> {
-            CompletableFuture<Suggestions> suggestions = suggestion.giveSuggestions(builder);
+object SuggestionUtil {
+    @JvmStatic
+    fun <S> safeSuggestions(suggestion: Suggestion): SuggestionProvider<S> {
+        return SuggestionProvider { context: CommandContext<S>?, builder: SuggestionsBuilder ->
+            val suggestions = suggestion.invoke(builder)
             if (suggestions == null) {
-                return builder.buildFuture();
+                return@SuggestionProvider builder.buildFuture()
             } else {
-                return suggestions;
+                return@SuggestionProvider suggestions
             }
-        };
-    }
-
-    public static CompletableFuture<Suggestions> givePlaylistSuggestions(SuggestionsBuilder builder) {
-        if (!Files.exists(SongPlayer.PLAYLISTS_DIR)) return null;
-        try {
-            return CommandSource.suggestMatching(
-                    Files.list(SongPlayer.PLAYLISTS_DIR)
-                            .filter(Files::isDirectory)
-                            .map(Path::getFileName)
-                            .map(Path::toString),
-                    builder
-            );
-        } catch (IOException e) {
-            return null;
         }
     }
 
-    public static CompletableFuture<Suggestions> giveSongDirectorySuggestions(SuggestionsBuilder builder) {
-        String arg = builder.getRemaining();
+    @JvmStatic
+    fun giveSongDirectorySuggestions(builder: SuggestionsBuilder): CompletableFuture<Suggestions>? {
+        val arg = builder.remaining
 
-        int lastSlash = arg.lastIndexOf("/");
-        String dirString;
-        Path dir = SongPlayer.SONG_DIR;
+        val lastSlash = arg.lastIndexOf("/")
+        val dirString: String
+        var dir = SongPlayer.SONG_DIR
         if (lastSlash >= 0) {
-            dirString = arg.substring(0, lastSlash+1);
+            dirString = arg.substring(0, lastSlash + 1)
             try {
-                dir = resolveWithIOException(dir, dirString);
-            } catch (IOException e) {
-                return null;
+                dir = Util.resolveWithIOException(dir, dirString)
+            } catch (e: IOException) {
+                return null
             }
         } else {
-            dirString = "";
+            dirString = ""
         }
 
-        Stream<Path> songFiles;
+        val songFiles: Stream<Path>
         try {
-            songFiles = Files.list(dir);
-        } catch (IOException e) {
-            return null;
+            songFiles = Files.list(dir)
+        } catch (e: IOException) {
+            return null
         }
-
-        int clipStart;
-        if (arg.contains(" ")) {
-            clipStart = arg.lastIndexOf(" ") + 1;
+        val clipStart = if (arg.contains(" ")) {
+            arg.lastIndexOf(" ") + 1
         } else {
-            clipStart = 0;
+            0
         }
 
-        Stream<String> suggestions = songFiles
-                .filter(Files::isDirectory)
-                .map(path -> dirString + path.getFileName().toString() + "/")
-                .filter(str -> str.startsWith(arg))
-                .map(str -> str.substring(clipStart));
+        val suggestions = songFiles
+            .filter { path: Path? -> Files.isDirectory(path) }
+            .map { path: Path -> dirString + path.fileName.toString() + "/" }
+            .filter { str: String -> str.startsWith(arg) }
+            .map { str: String -> str.substring(clipStart) }
 
-        return CommandSource.suggestMatching(suggestions, builder);
+        return CommandSource.suggestMatching(suggestions, builder)
     }
 
-    //TODO: doesn't work for directories with spaces in their name.
-    public static CompletableFuture<Suggestions> giveSongSuggestions(SuggestionsBuilder suggestionsBuilder) {
-        String arg = suggestionsBuilder.getRemaining();
+    //TODO: doesn't work for directories with spaces in their path.
+    @JvmStatic
+    fun giveSongSuggestions(suggestionsBuilder: SuggestionsBuilder): CompletableFuture<Suggestions>? {
+        val arg = suggestionsBuilder.remaining
 
-        int lastSlash = arg.lastIndexOf("/");
-        String dirString = "";
-        Path dir = SongPlayer.SONG_DIR;
+        val lastSlash = arg.lastIndexOf("/")
+        var dirString = ""
+        var dir = SongPlayer.SONG_DIR
         if (lastSlash >= 0) {
-            dirString = arg.substring(0, lastSlash+1);
+            dirString = arg.substring(0, lastSlash + 1)
             try {
-                dir = resolveWithIOException(dir, dirString);
-            } catch (IOException e) {
-                return null;
+                dir = Util.resolveWithIOException(dir, dirString)
+            } catch (e: IOException) {
+                return null
             }
         }
 
-        Stream<Path> songFiles;
+        val songFiles: Stream<Path>
         try {
-            songFiles = Files.list(dir);
-        } catch (IOException e) {
-            return null;
+            songFiles = Files.list(dir)
+        } catch (e: IOException) {
+            return null
         }
-
-        int clipStart;
-        if (arg.contains(" ")) {
-            clipStart = arg.lastIndexOf(" ") + 1;
+        val clipStart = if (arg.contains(" ")) {
+            arg.lastIndexOf(" ") + 1
         } else {
-            clipStart = 0;
+            0
         }
 
-        ArrayList<String> suggestionsList = new ArrayList<>();
-        for (Path path : songFiles.toList()) {
+        val suggestionsList = ArrayList<String>()
+        for (path in songFiles.toList()) {
             if (Files.isRegularFile(path)) {
-                if (!SongParserRegistry.instance.supportsExtension(FileNameUtils.getExtension(path))) continue;
-                suggestionsList.add(dirString + path.getFileName().toString());
+                if (!supportsExtension(FileNameUtils.getExtension(path))) continue
+                suggestionsList.add(dirString + path.fileName.toString())
             } else if (Files.isDirectory(path)) {
-                suggestionsList.add(dirString + path.getFileName().toString() + "/");
+                suggestionsList.add(dirString + path.fileName.toString() + "/")
             }
         }
 
-        Stream<String> suggestions = suggestionsList.stream()
-                .filter(str -> str.startsWith(arg))
-                .map(str -> str.substring(clipStart));
+        val suggestions = suggestionsList.stream()
+            .filter { str: String -> str.startsWith(arg) }
+            .map { str: String -> str.substring(clipStart) }
 
-        return CommandSource.suggestMatching(suggestions, suggestionsBuilder);
+        return CommandSource.suggestMatching(suggestions, suggestionsBuilder)
     }
+
 }
+
+typealias Suggestion = (SuggestionsBuilder) -> CompletableFuture<Suggestions>?

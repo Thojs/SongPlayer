@@ -1,20 +1,11 @@
-package com.github.hhhzzzsss.songplayer.song;
+package com.github.hhhzzzsss.songplayer.song
 
-public class Note implements Comparable<Note> {
-	public final int noteId;
-	public final long time;
-
-	public Note(int note, long time) {
-		this.noteId = note;
-		this.time = time;
-	}
-
-	@Override
-	public int compareTo(Note other) {
-		if (time < other.time) {
-			return -1;
-		} else if (time > other.time) {
-			return 1;
-		} else return Integer.compare(noteId, other.noteId);
-	}
+class Note(@JvmField val noteId: Int, @JvmField val time: Long) : Comparable<Note> {
+    override fun compareTo(other: Note): Int {
+        return if (time < other.time) {
+            -1
+        } else if (time > other.time) {
+            1
+        } else noteId.compareTo(other.noteId)
+    }
 }

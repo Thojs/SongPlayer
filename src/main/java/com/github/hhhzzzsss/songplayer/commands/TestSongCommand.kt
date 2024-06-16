@@ -1,33 +1,25 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.github.hhhzzzsss.songplayer.song.Note;
-import com.github.hhhzzzsss.songplayer.song.Song;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.github.hhhzzzsss.songplayer.playing.SongHandler
+import com.github.hhhzzzsss.songplayer.song.Note
+import com.github.hhhzzzsss.songplayer.song.Song
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
-class TestSongCommand extends Command {
-    @Override
-    public String getName() {
-        return "testSong";
-    }
+internal class TestSongCommand : Command {
+    override val name = "testSong"
 
-    @Override
-    public String getDescription() {
-        return "Creates a song for testing";
-    }
+    override val description = "Creates a song for testing"
 
-    @Override
-    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        node.executes(context -> {
-            Song song = new Song("test_song");
-            for (int i=0; i<400; i++) {
-                song.add(new Note(i, i*50));
+    override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        node.executes {
+            val song = Song("Test song")
+            for (i in 0..399) {
+                song.add(Note(i, (i * 50).toLong()))
             }
-            song.length = 400*50;
-            SongHandler.instance.getSongQueue().forcePlay(song);
-
-            return 1;
-        });
+            song.length = (400 * 50).toLong()
+            SongHandler.instance.songQueue.forcePlay(song)
+            1
+        }
     }
 }

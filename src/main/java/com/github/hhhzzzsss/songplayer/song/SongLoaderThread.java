@@ -1,8 +1,8 @@
 package com.github.hhhzzzsss.songplayer.song;
 
 import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.conversion.SongParser;
-import com.github.hhhzzzsss.songplayer.conversion.SongParserRegistry;
+import com.github.hhhzzzsss.songplayer.io.SongParser;
+import com.github.hhhzzzsss.songplayer.io.SongParserRegistry;
 import com.github.hhhzzzsss.songplayer.utils.DownloadResponse;
 import com.github.hhhzzzsss.songplayer.utils.DownloadUtils;
 import com.github.hhhzzzsss.songplayer.utils.Util;
@@ -48,13 +48,13 @@ public class SongLoaderThread extends Thread {
                 content = res.content;
 				filename = Paths.get(songUrl.toURI().getPath()).getFileName().toString();
 
-				parsers = SongParserRegistry.instance.getMIMEParser(res.mimeType);
+				parsers = SongParserRegistry.INSTANCE.getMIMEParser(res.mimeType);
 			} else {
 				content = Files.readAllBytes(songPath);
 				filename = songPath.getFileName().toString();
 
 				String extension = FileNameUtils.getExtension(songPath);
-				parsers = SongParserRegistry.instance.getExtensionParser(extension);
+				parsers = SongParserRegistry.INSTANCE.getExtensionParser(extension);
 			}
 
 			// Parse content

@@ -2,7 +2,7 @@
 
 # SongPlayer
 SongPlayer is a Fabric mod for Minecraft that plays songs with noteblocks.
-The current version is for Minecraft 1.20.4.
+The current version is for Minecraft 1.20.5 and 1.20.6.
 
 ## How it works
 SongPlayer places noteblocks with nbt and instrument data already in them, so the noteblocks do not need to be individually tuned.
@@ -49,23 +49,17 @@ Stops playing or building and clears the queue.
 ### skip
 Skips the current song and goes to the next one.
 
-### goto \<mm:ss>
-Goes to a specific time in the current playing song.
+### seek \<mm:ss>
+Seeks to a specific timestamp in the current playing song.
 
 ### loop
 Toggles the looping mode on the current song.
 
 ### status
-
 Gets the status of the current song that is playing.
 
 ### queue
-
 Shows all the songs in the queue.
-
-### songs (subdirectory)
-
-If no arguments are given, lists songs in the `songs` folder. Otherwise, lists songs in the specified subdirectory.
 
 ### setCommands use \<vanilla|essentials>
 Switch to using Essentials or vanilla gamemode commands.
@@ -76,24 +70,20 @@ Sets the command that will be used to switch to creative mode.
 ### setCommands survival \<command>
 Sets the command that will be used to switch to survival mode.
 
-### toggleFakePlayer
-
+### fakePlayer
 Toggles whether a fake player will show up to represent your true position while playing a song. When playing a song, since it automatically enables freecam, your true position will be different from your apparent position. The fake player will show where you actually are. By default, this is disabled.
 
-### setStageType \<DEFAULT | WIDE | SPHERICAL>
-
+### stageType \<DEFAULT | WIDE | SPHERICAL>
 Sets the type of noteblock stage to build. Thanks Sk8kman and Lizard16 for the spherical stage design!
 - Default: A square shaped stage with a maximum of 300 noteblocks
 - Wide: A cylindrical stage with a maximum of 360 noteblocks
 - Spherical: A densely packed spherical stage that can contain all 400 possible noteblocks
 
 ### toggleMovement \<swing | rotate>
-
 Toggles whether you swing your arm when hitting a noteblock and rotate to look at the noteblocks you are hitting.
 
 ### announcement \<enable | disable | get>
 ### announcement set
-
 Set an announcement message that is sent when you start playing a song.
 With setMessage, write `[name]` where the song name should go.
 
@@ -101,7 +91,6 @@ Example: `/sp announcement set &6Now playing: &3[name]`
 
 ### item create \<song or url>
 ### item setname \<name>
-
 Encodes song data into an item. When you right-click on such an item, SongPlayer will automatically detect that it is a song item and ask if you want to play it. These items, once created, can be used by anyone that is using the necessary version of SongPlayer.
 
 It will automatically generate custom item names and lore, but these can be modified or deleted without affecting the song data, so feel free to edit the items as you wish. SongPlayer only looks at the `SongItemData` tag.

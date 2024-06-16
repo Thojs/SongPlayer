@@ -1,14 +1,16 @@
-package com.github.hhhzzzsss.songplayer.conversion;
+package com.github.hhhzzzsss.songplayer.io;
 
 import com.github.hhhzzzsss.songplayer.utils.Util;
 import com.github.hhhzzzsss.songplayer.song.Note;
 import com.github.hhhzzzsss.songplayer.song.Song;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
+import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -17,7 +19,7 @@ public class SPParser implements SongParser {
     public static final long MAX_UNCOMPRESSED_SIZE = 50*1024*1024;
 
     @Override
-    public Song parse(byte[] bytes, String fileName) {
+    public @Nullable Song parse(byte @NotNull [] bytes, @NotNull String fileName) {
         try {
             InputStream is = new Util.LimitedSizeInputStream(new GZIPInputStream(new ByteArrayInputStream(bytes)), MAX_UNCOMPRESSED_SIZE);
             bytes = is.readAllBytes();
@@ -161,13 +163,14 @@ public class SPParser implements SongParser {
         os.write((int) (val >>> 56) & 0xFF);
     }
 
+    @Nullable
     @Override
-    public Collection<String> getMIMETypes() {
+    public List<String> getMimeTypes() {
         return null;
     }
 
     @Override
-    public Collection<String> getFileExtensions() {
+    public List<String> getFileExtensions() {
         return null;
     }
 }

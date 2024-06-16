@@ -1,5 +1,6 @@
 plugins {
-	id("fabric-loom") version "1.4-SNAPSHOT"
+	kotlin("jvm") version "2.0.0"
+	id("fabric-loom") version "1.6-SNAPSHOT"
 	id("maven-publish")
 }
 
@@ -22,6 +23,8 @@ dependencies {
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
 	modImplementation("net.fabricmc.fabric-api:fabric-api:$fabric_version")
+
+	modImplementation("net.fabricmc:fabric-language-kotlin:1.11.0+kotlin.2.0.0")
 }
 
 tasks {
@@ -34,8 +37,7 @@ tasks {
 	}
 
 	compileJava {
-		// Minecraft 1.18 (1.18-pre2) upwards uses Java 17.
-		options.release = 17
+		options.release = 21
 	}
 
 	jar {

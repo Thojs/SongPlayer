@@ -1,26 +1,25 @@
-package com.github.hhhzzzsss.songplayer.stage;
+package com.github.hhhzzzsss.songplayer.stage
 
-import java.util.HashMap;
-import java.util.Set;
+class StageTypeRegistry private constructor() {
+    private val types = HashMap<String, StageType>()
 
-public class StageTypeRegistry {
-    public static final StageTypeRegistry instance = new StageTypeRegistry();
-    private final HashMap<String, StageType> types = new HashMap<>();
+    fun registerStageTypes(vararg types: StageType) {
+        for (type in types) {
+            if (type.identifier.contains(" ")) continue  // Spaces are not allowed.
 
-    private StageTypeRegistry() {}
-
-    public void registerStageTypes(StageType... types) {
-        for (StageType type : types) {
-            if (type.getIdentifier().contains(" ")) continue; // Spaces are not allowed.
-            this.types.put(type.getIdentifier(), type);
+            this.types[type.identifier] = type
         }
     }
 
-    public StageType getType(String identifier) {
-        return types.get(identifier);
+    fun getType(identifier: String): StageType? {
+        return types[identifier]
     }
 
-    public Set<String> getIdentifiers() {
-        return types.keySet();
+    val identifiers: List<String>
+        get() = types.keys.toList()
+
+    companion object {
+        @JvmField
+        val instance: StageTypeRegistry = StageTypeRegistry()
     }
 }

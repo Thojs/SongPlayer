@@ -1,39 +1,34 @@
-package com.github.hhhzzzsss.songplayer.stage;
+package com.github.hhhzzzsss.songplayer.stage
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos
+import kotlin.math.abs
 
-import java.util.Collection;
+class DefaultStage : StageType {
+    override val identifier = "default"
 
-public class DefaultStage implements StageType {
-    @Override
-    public String getIdentifier() {
-        return "default";
-    }
-
-    @Override
-    public void getBlocks(Collection<BlockPos> noteLocations, Collection<BlockPos> breakLocations) {
-        for (int dx = -4; dx <= 4; dx++) {
-            for (int dz = -4; dz <= 4; dz++) {
-                if (Math.abs(dx) == 4 && Math.abs(dz) == 4)  {
-                    noteLocations.add(new BlockPos(dx, 0, dz));
-                    noteLocations.add(new BlockPos(dx, 2, dz));
-                    breakLocations.add(new BlockPos(dx, 1, dz));
+    override fun getBlocks(noteLocations: MutableList<BlockPos>, breakLocations: MutableList<BlockPos>) {
+        for (dx in -4..4) {
+            for (dz in -4..4) {
+                if (abs(dx.toDouble()) == 4.0 && abs(dz.toDouble()) == 4.0) {
+                    noteLocations.add(BlockPos(dx, 0, dz))
+                    noteLocations.add(BlockPos(dx, 2, dz))
+                    breakLocations.add(BlockPos(dx, 1, dz))
                 } else {
-                    noteLocations.add(new BlockPos(dx, -1, dz));
-                    noteLocations.add(new BlockPos(dx, 2, dz));
-                    breakLocations.add(new BlockPos(dx, 0, dz));
-                    breakLocations.add(new BlockPos(dx, 1, dz));
+                    noteLocations.add(BlockPos(dx, -1, dz))
+                    noteLocations.add(BlockPos(dx, 2, dz))
+                    breakLocations.add(BlockPos(dx, 0, dz))
+                    breakLocations.add(BlockPos(dx, 1, dz))
                 }
             }
         }
 
-        for (int dx = -4; dx <= 4; dx++) {
-            for (int dz = -4; dz <= 4; dz++) {
+        for (dx in -4..4) {
+            for (dz in -4..4) {
                 if (withinBreakingDistance(dx, -3, dz)) {
-                    noteLocations.add(new BlockPos(dx, -3, dz));
+                    noteLocations.add(BlockPos(dx, -3, dz))
                 }
                 if (withinBreakingDistance(dx, 4, dz)) {
-                    noteLocations.add(new BlockPos(dx, 4, dz));
+                    noteLocations.add(BlockPos(dx, 4, dz))
                 }
             }
         }

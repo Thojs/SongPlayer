@@ -1,35 +1,27 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.playing.SongHandler
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
-class StopCommand extends Command {
-    @Override
-    public String getName() {
-        return "stop";
-    }
+internal class StopCommand : Command {
+    override val name = "stop"
 
-    @Override
-    public String getDescription() {
-        return "Stops playing";
-    }
+    override val description = "Stops playing"
 
-    @Override
-    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        SongHandler instance = SongHandler.instance;
+    override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        val instance = SongHandler.instance
 
-        node.executes(context -> {
-            if (instance.getSongQueue().isEmpty()) {
-                SongPlayer.addChatMessage("§6No song is currently playing");
-                return 1;
+        node.executes {
+            if (instance.songQueue.isEmpty) {
+                SongPlayer.addChatMessage("§6No song is currently playing")
+                return@executes 1
             }
+            instance.restoreStateAndCleanUp()
+            SongPlayer.addChatMessage("§6Stopped playing")
 
-            instance.restoreStateAndCleanUp();
-            SongPlayer.addChatMessage("§6Stopped playing");
-
-            return 1;
-        });
+            1
+        }
     }
 }

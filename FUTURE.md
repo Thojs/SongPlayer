@@ -2,10 +2,7 @@
 - Destroy stage after playing.
 - Automatically crouch to the beat of the music.
 - Put playback controls on an interface.
+ - Playlist functionality.
 - client side play mode.
 - Translations
 - Decrease suggestion length of big paths.
-- Kotlin?
-- Playlist functionality.
-- won't go to survival mode if stage is already ready.
-- playing state breaks in singleplayer?

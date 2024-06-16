@@ -1,57 +1,60 @@
-package com.github.hhhzzzsss.songplayer.playing;
+package com.github.hhhzzzsss.songplayer.playing
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.mojang.blaze3d.systems.RenderSystem;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.mojang.blaze3d.systems.RenderSystem
+import net.minecraft.client.gui.DrawContext
+import net.minecraft.text.MutableText
+import net.minecraft.text.Text
 
-import java.util.Objects;
+object ProgressDisplay {
+    private var topText: MutableText = Text.empty()
+    private var bottomText: MutableText = Text.empty()
+    private var fade = 0
 
-public class ProgressDisplay {
-    public static final ProgressDisplay instance = new ProgressDisplay();
-    private ProgressDisplay() {}
-
-    public MutableText topText = Text.empty();
-    public MutableText bottomText = Text.empty();
-    public int fade = 0;
-
-    public void setText(MutableText bottomText, MutableText topText) {
-        this.bottomText = bottomText;
-        this.topText = topText;
-        fade = 100;
+    fun setText(bottomText: MutableText, topText: MutableText) {
+        this.bottomText = bottomText
+        this.topText = topText
+        fade = 100
     }
 
-    public void onRenderHUD(DrawContext context, int scaledWidth, int scaledHeight, int heldItemTooltipFade) {
-        if (fade <= 0) return;
+    fun onRenderHUD(context: DrawContext, heldItemTooltipFade: Int) {
+        if (fade <= 0) return
 
-        int bottomTextWidth = SongPlayer.MC.textRenderer.getWidth(bottomText);
-        int topTextWidth = SongPlayer.MC.textRenderer.getWidth(topText);
-        int bottomTextX = (scaledWidth - bottomTextWidth) / 2;
-        int topTextX = (scaledWidth - topTextWidth) / 2;
-        int bottomTextY = scaledHeight - 59;
-        if (!SongPlayer.MC.interactionManager.hasStatusBars()) {
-            bottomTextY += 14;
+        val bottomTextWidth = SongPlayer.MC.textRenderer.getWidth(bottomText)
+        val topTextWidth = SongPlayer.MC.textRenderer.getWidth(topText)
+        val bottomTextX = (SongPlayer.MC.window.scaledWidth - bottomTextWidth) / 2
+        val topTextX = (SongPlayer.MC.window.scaledWidth - topTextWidth) / 2
+        var bottomTextY = SongPlayer.MC.window.scaledHeight - 59
+
+        if (!SongPlayer.MC.interactionManager!!.hasStatusBars()) {
+            bottomTextY += 14
         }
+
         if (heldItemTooltipFade > 0) {
-            bottomTextY -= 12;
+            bottomTextY -= 12
         }
-        int topTextY = bottomTextY - 12;
 
-        int opacity = (int)((float)this.fade * 256.0F / 10.0F);
+        val topTextY = bottomTextY - 12
+
+        var opacity = (fade.toFloat() * 256.0f / 10.0f).toInt()
         if (opacity > 255) {
-            opacity = 255;
+            opacity = 255
         }
 
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
-        Objects.requireNonNull(SongPlayer.MC.textRenderer);
-        context.drawTextWithShadow(SongPlayer.MC.textRenderer, bottomText, bottomTextX, bottomTextY, 16777215 + (opacity << 24));
-        context.drawTextWithShadow(SongPlayer.MC.textRenderer, topText, topTextX, topTextY, 16777215 + (opacity << 24));
-        RenderSystem.disableBlend();
+        RenderSystem.enableBlend()
+        RenderSystem.defaultBlendFunc()
+        context.drawTextWithShadow(
+            SongPlayer.MC.textRenderer,
+            bottomText,
+            bottomTextX,
+            bottomTextY,
+            16777215 + (opacity shl 24)
+        )
+        context.drawTextWithShadow(SongPlayer.MC.textRenderer, topText, topTextX, topTextY, 16777215 + (opacity shl 24))
+        RenderSystem.disableBlend()
     }
 
-    public void onTick() {
-        if (fade > 0) fade--;
+    fun onTick() {
+        if (fade > 0) fade--
     }
 }

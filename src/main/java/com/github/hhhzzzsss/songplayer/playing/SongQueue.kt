@@ -1,89 +1,78 @@
-package com.github.hhhzzzsss.songplayer.playing;
+package com.github.hhhzzzsss.songplayer.playing
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.song.Song;
-import com.github.hhhzzzsss.songplayer.song.SongLoaderThread;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.song.Song
+import com.github.hhhzzzsss.songplayer.song.SongLoaderThread
+import java.io.IOException
+import java.util.*
 
-import java.io.IOException;
-import java.util.LinkedList;
-import java.util.List;
+class SongQueue {
+    private val songQueue = mutableListOf<Song>()
 
-public class SongQueue {
-    private final LinkedList<Song> songQueue = new LinkedList<>();
-    private Song currentSong = null;
+    var currentSong: Song? = null
+        private set
 
-    private SongLoaderThread loaderThread = null;
+    private var loaderThread: SongLoaderThread? = null
 
     // Playback
-    public void forcePlay(Song song) {
-        if (song == null) throw new IllegalArgumentException("song cannot be null.");
-        currentSong = song;
+    fun forcePlay(song: Song) {
+        currentSong = song
     }
 
-    public void next() {
-        currentSong = null;
-        checkSong();
+    fun next() {
+        currentSong = null
+        checkSong()
     }
 
-    public void clear() {
-        currentSong = null;
-        clearQueue();
+    fun clear() {
+        currentSong = null
+        songQueue.clear()
     }
 
-    public void clearQueue() {
-        songQueue.clear();
-    }
-
-    // Accessors
-    public List<Song> getQueue() {
-        return List.copyOf(songQueue);
-    }
-
-    public Song getCurrentSong() {
-        return currentSong;
-    }
+    val queue: Array<Song>
+        // Accessors
+        get() = songQueue.toTypedArray()
 
     // Loading
-    public void addSong(Song song) {
-        songQueue.add(song);
-        checkSong();
+    fun addSong(song: Song) {
+        songQueue.add(song)
+        checkSong()
     }
 
-    public void loadSong(String location) throws IOException, IllegalStateException {
-        if (loaderThread != null) {
-            throw new IllegalStateException("Already loading a song, cannot load another");
+    @Throws(IOException::class, IllegalStateException::class)
+    fun loadSong(location: String) {
+        check(loaderThread == null) { "Already loading a song, cannot load another" }
+
+        loaderThread = SongLoaderThread(location)
+        loaderThread!!.start()
+    }
+
+    @Throws(IllegalStateException::class)
+    fun loadSong(thread: SongLoaderThread) {
+        check(loaderThread == null) { "Already loading a song, cannot load another" }
+
+        loaderThread = thread
+    }
+
+    fun checkLoaderThread() {
+        val lt = loaderThread ?: return
+        if (lt.isAlive) return
+
+        if (lt.exception != null) {
+            SongPlayer.addChatMessage("§cFailed to load song: §4" + lt.exception.message)
+            loaderThread = null
+            return
         }
 
-        loaderThread = new SongLoaderThread(location);
-        loaderThread.start();
+        addSong(lt.song)
+        loaderThread = null
     }
 
-    public void loadSong(SongLoaderThread thread) throws IllegalStateException {
-        if (loaderThread != null) {
-            throw new IllegalStateException("Already loading a song, cannot load another");
-        }
-
-        loaderThread = thread;
+    private fun checkSong() {
+        if (queue.isEmpty()) return
+        if (currentSong == null) currentSong = songQueue.removeFirst()
     }
 
-    public void checkLoaderThread() {
-        if (loaderThread == null || loaderThread.isAlive()) return;
-
-        if (loaderThread.exception != null) {
-            SongPlayer.addChatMessage("§cFailed to load song: §4" + loaderThread.exception.getMessage());
-        } else {
-            addSong(loaderThread.song);
-        }
-
-        loaderThread = null;
-    }
-
-    private void checkSong() {
-        if (currentSong == null) currentSong = songQueue.pollFirst();
-    }
-
-    // Other
-    public boolean isEmpty() {
-        return currentSong == null && songQueue.isEmpty();
-    }
+    val isEmpty: Boolean
+        get() = currentSong == null && songQueue.isEmpty()
 }

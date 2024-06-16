@@ -10,21 +10,24 @@ import com.github.hhhzzzsss.songplayer.stage.StageTypeRegistry;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.NoteBlock;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.BlockStateComponent;
 import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
+import net.minecraft.item.Items;
 import net.minecraft.text.MutableText;
 import net.minecraft.text.Text;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.GameMode;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class StageBuilder {
+public class StageBuilder implements Phase {
 	private boolean isBuilding = false;
-	
+
 	public BlockPos position = null;
 	public HashMap<Integer, BlockPos> noteblockPositions = new HashMap<>();
 
@@ -53,7 +56,9 @@ public class StageBuilder {
 		}
 
 		ClientWorld world = SongPlayer.MC.world;
-		if (handler.getGameMode() != GameMode.CREATIVE) return;
+
+		handler.requestGameMode(this);
+		if (handler.getGameMode() != getRequiredGamemode()) return;
 
 		// Check if building has finished & all needed note-blocks have been placed.
 		if (nothingToBuild()) {
@@ -105,7 +110,6 @@ public class StageBuilder {
 		// restore everything, go to play state.
 		restoreBuildSlot();
 		isBuilding = false;
-		handler.setSurvivalIfNeeded();
 		SongPlayer.addChatMessage("§6Now playing §3" + handler.getLoadedSong().name);
 	}
 
@@ -120,7 +124,6 @@ public class StageBuilder {
 
 		// Switch to building.
 		isBuilding = true;
-		handler.setCreativeIfNeeded();
 		handler.getLoadedSong().pause();
 		buildStartDelay = 20;
 	}
@@ -130,7 +133,7 @@ public class StageBuilder {
 					.append(Text.literal("Building noteblocks | " ).formatted(Formatting.GOLD))
 					.append(Text.literal((totalMissingNotes - missingNotes.size()) + "/" + totalMissingNotes).formatted(Formatting.DARK_AQUA));
 
-		ProgressDisplay.instance.setText(buildText, handler.getGameMode() != GameMode.CREATIVE ? Text.literal("Waiting for creative mode").formatted(Formatting.RED) : Text.empty());
+		ProgressDisplay.INSTANCE.setText(buildText, handler.getGameMode() != GameMode.CREATIVE ? Text.literal("Waiting for creative mode").formatted(Formatting.RED) : Text.empty());
 	}
 
 	public void checkBuildStatus() {
@@ -146,7 +149,7 @@ public class StageBuilder {
 		}
 
 		ArrayList<BlockPos> noteblockLocations = new ArrayList<>();
-		HashSet<BlockPos> breakLocations = new HashSet<>();
+		ArrayList<BlockPos> breakLocations = new ArrayList<>();
 		StageType type = StageTypeRegistry.instance.getType(Config.getConfig().stageType);
 
 		if (type != null) type.getBlocks(noteblockLocations, breakLocations);
@@ -300,25 +303,32 @@ public class StageBuilder {
 		inventory.selectedSlot = buildSlot;
 		((ClientPlayerInteractionManagerAccessor) handler.getInteractionManager()).invokeSyncSelectedSlot();
 
-		NbtCompound nbt = new NbtCompound();
-		nbt.putString("id", "minecraft:note_block");
-		nbt.putByte("Count", (byte) 1);
+		ItemStack item = Items.NOTE_BLOCK.getDefaultStack();
+		item.set(DataComponentTypes.BLOCK_STATE, new BlockStateComponent(Map.of(
+				"instrument", instrument.instrumentName,
+				"note", Integer.toString(pitch)
+		)));
 
-		NbtCompound tag = new NbtCompound();
-		NbtCompound bsTag = new NbtCompound();
-		bsTag.putString("instrument", instrument.instrumentName);
-		bsTag.putString("note", Integer.toString(pitch));
+		inventory.main.set(buildSlot, item);
+		handler.getInteractionManager().clickCreativeStack(item, 36 + buildSlot);
+	}
 
-		tag.put("BlockStateTag", bsTag);
-		nbt.put("tag", tag);
-
-		ItemStack noteBlockStack = ItemStack.fromNbt(nbt);
-		inventory.main.set(buildSlot, noteBlockStack);
-		handler.getInteractionManager().clickCreativeStack(noteBlockStack, 36 + buildSlot);
+	public void cleanup() {
+		noteblockPositions.clear();
+		requiredBreaks.clear();
+		position = null;
+		missingNotes.clear();
+		totalMissingNotes = 0;
 	}
 
 	// Accessors
 	public boolean isBuilding() {
 		return isBuilding;
+	}
+
+	@Nullable
+	@Override
+	public GameMode getRequiredGamemode() {
+		return GameMode.CREATIVE;
 	}
 }

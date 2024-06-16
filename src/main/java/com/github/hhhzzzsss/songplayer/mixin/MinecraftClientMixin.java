@@ -43,7 +43,7 @@ public class MinecraftClientMixin {
 		if (SongPlayer.MC.world != null && SongPlayer.MC.player != null && SongPlayer.MC.interactionManager != null) {
 			SongHandler.instance.onUpdate(true);
 		}
-		ProgressDisplay.instance.onTick();
+		ProgressDisplay.INSTANCE.onTick();
 	}
 
 	@Inject(at = @At("HEAD"), method = "doItemUse()V", cancellable = true)

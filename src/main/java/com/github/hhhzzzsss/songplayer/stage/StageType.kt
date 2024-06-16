@@ -1,17 +1,15 @@
-package com.github.hhhzzzsss.songplayer.stage;
+package com.github.hhhzzzsss.songplayer.stage
 
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockPos
 
-import java.util.Collection;
+interface StageType {
+    val identifier: String
 
-public interface StageType {
-    String getIdentifier();
+    fun getBlocks(noteLocations: MutableList<BlockPos>, breakLocations: MutableList<BlockPos>)
 
-    void getBlocks(Collection<BlockPos> noteLocations, Collection<BlockPos> breakLocations);
-
-    default boolean withinBreakingDistance(int dx, int dy, int dz) {
-        double dy1 = dy + 0.5 - 1.62; // Standing eye height
-        double dy2 = dy + 0.5 - 1.27; // Crouching eye height
-        return dx*dx + dy1*dy1 + dz*dz < 5.99999*5.99999 && dx*dx + dy2*dy2 + dz*dz < 5.99999*5.99999;
+    fun withinBreakingDistance(dx: Int, dy: Int, dz: Int): Boolean {
+        val dy1 = dy + 0.5 - 1.62 // Standing eye height
+        val dy2 = dy + 0.5 - 1.27 // Crouching eye height
+        return dx * dx + dy1 * dy1 + dz * dz < 5.99999 * 5.99999 && dx * dx + dy2 * dy2 + dz * dz < 5.99999 * 5.99999
     }
 }

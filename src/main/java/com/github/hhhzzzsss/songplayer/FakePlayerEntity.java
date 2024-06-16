@@ -6,7 +6,6 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.network.OtherClientPlayerEntity;
 import net.minecraft.client.network.PlayerListEntry;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.EntityPose;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
@@ -17,14 +16,13 @@ public class FakePlayerEntity extends OtherClientPlayerEntity {
 	public static final UUID FAKE_PLAYER_UUID = UUID.randomUUID();
 
 	ClientPlayerEntity player = SongPlayer.MC.player;
-	ClientWorld world = SongPlayer.MC.world;
-	
+
 	public FakePlayerEntity() {
 		super(SongPlayer.MC.world, getProfile());
-		
+
 		copyStagePosAndPlayerLook();
 		syncWithPlayer();
-		
+
 		headYaw = player.headYaw;
 		bodyYaw = player.bodyYaw;
 
@@ -36,8 +34,8 @@ public class FakePlayerEntity extends OtherClientPlayerEntity {
 		capeX = getX();
 		capeY = getY();
 		capeZ = getZ();
-		
-		world.addEntity(this);
+
+		clientWorld.addEntity(this);
 	}
 
 	public void syncWithPlayer() {

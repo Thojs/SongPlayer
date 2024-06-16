@@ -36,6 +36,8 @@ public class SongHandler {
     private GameMode originalGamemode = GameMode.CREATIVE;
     public boolean wasFlying = false;
 
+    private Phase requestedGameModePhase = null;
+
     public void onUpdate(boolean tick) {
         // Check if loader thread is finished and handle accordingly
         songQueue.checkLoaderThread();
@@ -44,7 +46,6 @@ public class SongHandler {
         if (loadedSong != null && loadedSong.finished()) {
             SongPlayer.addChatMessage("§6Done playing §3" + loadedSong.name);
             songQueue.next();
-            loadedSong = null;
         }
 
         // Check queue and load song from it if necessary
@@ -200,12 +201,12 @@ public class SongHandler {
         }
     }
 
-    public void setCreativeIfNeeded() {
+    private void setCreativeIfNeeded() {
         if (getGameMode() != GameMode.CREATIVE) {
             sendGamemodeCommand(Config.getConfig().creativeCommand);
         }
     }
-    public void setSurvivalIfNeeded() {
+    private void setSurvivalIfNeeded() {
         if (getGameMode() != GameMode.SURVIVAL) {
             sendGamemodeCommand(Config.getConfig().survivalCommand);
         }
@@ -237,7 +238,7 @@ public class SongHandler {
         isActive = false;
         loadedSong = null;
         songQueue.clear();
-        stageBuilder.position = null;
+        stageBuilder.cleanup();
         removeFakePlayer();
     }
 
@@ -252,6 +253,8 @@ public class SongHandler {
                 setSurvivalIfNeeded();
             }
         }
+
+        requestedGameModePhase = null;
 
         cleanup();
     }
@@ -279,6 +282,7 @@ public class SongHandler {
 
         // Restore after finishing queue.
         if (loadedSong == null) {
+            SongPlayer.addChatMessage("§6The queue has ended.");
             restoreStateAndCleanUp();
             return;
         }
@@ -306,6 +310,20 @@ public class SongHandler {
 
     GameMode getGameMode() {
         return getInteractionManager().getCurrentGameMode();
+    }
+
+    void requestGameMode(Phase phase) {
+        if (requestedGameModePhase == phase) return;
+
+        requestedGameModePhase = phase;
+
+        GameMode mode = phase.getRequiredGamemode();
+
+        if (mode == GameMode.SURVIVAL) {
+            setSurvivalIfNeeded();
+        } else if (mode == GameMode.CREATIVE) {
+            setCreativeIfNeeded();
+        }
     }
 
     ClientPlayerEntity getPlayer() {

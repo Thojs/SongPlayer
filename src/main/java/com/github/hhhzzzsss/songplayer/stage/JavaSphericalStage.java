@@ -1,19 +1,19 @@
 package com.github.hhhzzzsss.songplayer.stage;
 
 import net.minecraft.util.math.BlockPos;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Collection;
+import java.util.List;
 
-public class SphericalStage implements StageType {
+public class JavaSphericalStage implements StageType {
+    @NotNull
     @Override
     public String getIdentifier() {
         return "spherical";
     }
 
-    // This code was taken from Sk8kman fork of SongPlayer
-    // Thanks Sk8kman and Lizard16 for this spherical stage design!
     @Override
-    public void getBlocks(Collection<BlockPos> noteLocations, Collection<BlockPos> breakLocations) {
+    public void getBlocks(@NotNull List<BlockPos> noteLocations, @NotNull List<BlockPos> breakLocations) {
         int[] yLayers = {-4, -2, -1, 0, 1, 2, 3, 4, 5, 6};
 
         for (int dx = -5; dx <= 5; dx++) {
@@ -34,10 +34,12 @@ public class SphericalStage implements StageType {
                             break;
                         }
                         case -2: { // also takes care of -3
-                            if (adz == 0 && adx == 0) break; // prevent placing in the center
-
-                            if (adz * adx > 9) break; // prevents building out too far
-
+                            if (adz == 0 && adx == 0) { // prevents placing int the center
+                                break;
+                            }
+                            if (adz * adx > 9) { // prevents building out too far
+                                break;
+                            }
                             if (adz + adx == 5 && adx != 0 && adz != 0) {
                                 // add noteblocks above and below here
                                 noteLocations.add(new BlockPos(dx, dy + 1, dz));
@@ -50,25 +52,25 @@ public class SphericalStage implements StageType {
                                 noteLocations.add(new BlockPos(dx, dy - 1, dz));
                                 break;
                             }
-                            if (adx < 3 && adz < 3) {
+                            if (adx < 3 && adz < 3 && adx + adz > 0) {
                                 noteLocations.add(new BlockPos(dx, dy, dz));
-                                breakLocations.add(new BlockPos(dx, 0, dz));
+                                breakLocations.add(new BlockPos(dx, dy + 2, dz));
                                 break;
                             }
                             if (adz == 0 ^ adx == 0) {
                                 noteLocations.add(new BlockPos(dx, dy, dz));
-                                breakLocations.add(new BlockPos(dx, 0, dz));
+                                breakLocations.add(new BlockPos(dx, dy + 2, dz));
                                 break;
                             }
                             if (adz * adx == 10) { // expecting one to be 2, and one to be 5.
                                 noteLocations.add(new BlockPos(dx, dy, dz));
-                                breakLocations.add(new BlockPos(dx, 0, dz));
+                                breakLocations.add(new BlockPos(dx, dy + 2, dz));
                                 break;
                             }
                             if (adz + adx == 6) {
                                 noteLocations.add(new BlockPos(dx, dy, dz));
                                 if (adx == 5 ^ adz == 5) {
-                                    breakLocations.add(new BlockPos(dx, 0, dz));
+                                    breakLocations.add(new BlockPos(dx, dy + 2, dz));
                                 }
                                 break;
                             }
@@ -184,5 +186,12 @@ public class SphericalStage implements StageType {
                 }
             }
         }
+    }
+
+    @Override
+    public boolean withinBreakingDistance(int dx, int dy, int dz) {
+        double dy1 = dy + 0.5 - 1.62; // Standing eye height
+        double dy2 = dy + 0.5 - 1.27; // Crouching eye height
+        return dx * dx + dy1 * dy1 + dz * dz < 5.99999 * 5.99999 && dx * dx + dy2 * dy2 + dz * dz < 5.99999 * 5.99999;
     }
 }

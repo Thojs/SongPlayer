@@ -1,50 +1,46 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.github.hhhzzzsss.songplayer.Config;
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.mojang.brigadier.arguments.StringArgumentType;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.github.hhhzzzsss.songplayer.Config
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.mojang.brigadier.arguments.StringArgumentType
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.ClientCommandManager
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
-class AnnouncementCommand extends Command {
-    @Override
-    public String getName() {
-        return "announcement";
-    }
+internal class AnnouncementCommand : Command {
+    override val name = "announcement"
 
-    @Override
-    public String getDescription() {
-        return "Set an announcement message that is sent when you start playing a song. With setMessage, write [name] where the song name should go.";
-    }
+    override val description: String = "Set an announcement message that is sent when you start playing a song. With setMessage, write [name] where the song name should go."
 
-    @Override
-    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        node.then(ClientCommandManager.literal("enable").executes(context -> {
-            Config.getConfig().doAnnouncement = true;
-            SongPlayer.addChatMessage("§6Enabled song announcements");
-            Config.saveConfigWithErrorHandling();
-            return 1;
-        }));
-        node.then(ClientCommandManager.literal("disable").executes(context -> {
-            Config.getConfig().doAnnouncement = false;
-            SongPlayer.addChatMessage("§6Disabled song announcements");
-            Config.saveConfigWithErrorHandling();
-            return 1;
-        }));
-        node.then(ClientCommandManager.literal("get").executes(context -> {
-            SongPlayer.addChatMessage("§6Current announcement message is §r" + Config.getConfig().announcementMessage);
-            return 1;
-        }));
+    override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        node.then(ClientCommandManager.literal("enable").executes {
+            Config.getConfig().doAnnouncement = true
+            SongPlayer.addChatMessage("§6Enabled song announcements")
+            Config.saveConfigWithErrorHandling()
+            1
+        })
+
+        node.then(ClientCommandManager.literal("disable").executes {
+            Config.getConfig().doAnnouncement = false
+            SongPlayer.addChatMessage("§6Disabled song announcements")
+            Config.saveConfigWithErrorHandling()
+            1
+        })
+
+        node.then(ClientCommandManager.literal("get").executes {
+            SongPlayer.addChatMessage("§6Current announcement message is §r" + Config.getConfig().announcementMessage)
+            1
+        })
+
         node.then(ClientCommandManager.literal("set").then(
             ClientCommandManager.argument("message", StringArgumentType.greedyString())
-                .executes(context -> {
-                    String message = context.getArgument("message", String.class);
-                    Config.getConfig().announcementMessage = message;
-                    SongPlayer.addChatMessage("§6Set announcement message to §r" + message);
-                    Config.saveConfigWithErrorHandling();
-                    return 1;
-                })
-        ));
+                .executes { context ->
+                    val message = context.getArgument("message", String::class.java)
+                    Config.getConfig().announcementMessage = message
+                    SongPlayer.addChatMessage("§6Set announcement message to §r$message")
+                    Config.saveConfigWithErrorHandling()
+                    1
+                }
+        ))
     }
 }

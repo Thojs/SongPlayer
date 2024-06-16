@@ -1,11 +1,3 @@
-package com.github.hhhzzzsss.songplayer.utils;
+package com.github.hhhzzzsss.songplayer.utils
 
-public class DownloadResponse {
-    public final byte[] content;
-    public final String mimeType;
-
-    public DownloadResponse(byte[] content, String mimeType) {
-        this.content = content;
-        this.mimeType = mimeType;
-    }
-}
+class DownloadResponse(@JvmField val content: ByteArray, @JvmField val mimeType: String)

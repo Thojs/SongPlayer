@@ -1,66 +1,70 @@
-package com.github.hhhzzzsss.songplayer.playing;
+package com.github.hhhzzzsss.songplayer.playing
 
-import com.github.hhhzzzsss.songplayer.utils.Util;
-import com.github.hhhzzzsss.songplayer.song.*;
-import net.minecraft.text.MutableText;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.GameMode;
+import com.github.hhhzzzsss.songplayer.playing.ProgressDisplay.setText
+import com.github.hhhzzzsss.songplayer.utils.Util.formatTime
+import net.minecraft.text.Text
+import net.minecraft.util.Formatting
+import net.minecraft.world.GameMode
+import kotlin.math.min
 
-public class NotePlayer {
-    private final SongHandler handler;
+class NotePlayer internal constructor(private val handler: SongHandler): Phase {
+    override val requiredGamemode = GameMode.SURVIVAL
 
-    NotePlayer(SongHandler handler) {
-        this.handler = handler;
-    }
+    fun handlePlaying(tick: Boolean) {
+        if (tick) setPlayProgressDisplay()
 
-    void handlePlaying(boolean tick) {
-        if (tick) setPlayProgressDisplay();
+        val stageBuilder = handler.stageBuilder
+        val currentSong = handler.loadedSong
 
-        StageBuilder stageBuilder = handler.stageBuilder;
-        Song currentSong = handler.getLoadedSong();
-
-        if (handler.getGameMode() != GameMode.SURVIVAL) {
-            currentSong.pause();
-            return;
+        handler.requestGameMode(this)
+        if (handler.gameMode != requiredGamemode) {
+            currentSong.pause()
+            return
         }
 
-        currentSong.play();
+        currentSong.play()
 
         // Play note blocks
-        boolean somethingPlayed = false;
-        currentSong.advanceTime();
+        var somethingPlayed = false
+        currentSong.advanceTime()
         while (currentSong.reachedNextNote()) {
-            Note note = currentSong.getNextNote();
-            BlockPos bp = stageBuilder.noteblockPositions.get(note.noteId);
-            if (bp == null) continue;
+            val note = currentSong.nextNote
+            val bp = stageBuilder.noteblockPositions[note.noteId] ?: continue
 
-            handler.attackBlock(bp);
-            somethingPlayed = true;
+            handler.attackBlock(bp)
+            somethingPlayed = true
         }
-        if (somethingPlayed) handler.stopAttack();
+        if (somethingPlayed) handler.stopAttack()
     }
 
-    private void setPlayProgressDisplay() {
-        Song currentSong = handler.getLoadedSong();
-        long currentTime = Math.min(currentSong.time, currentSong.length);
-        long totalTime = currentSong.length;
+    private fun setPlayProgressDisplay() {
+        val currentSong = handler.loadedSong
+        val currentTime = min(currentSong.time.toDouble(), currentSong.length.toDouble()).toLong()
+        val totalTime = currentSong.length
 
-        MutableText songText = Text.empty()
-                .append(Text.literal("Now playing: ").formatted(Formatting.GOLD))
-                .append(Text.literal(currentSong.name).formatted(Formatting.BLUE))
-                .append(Text.literal(" | ").formatted(Formatting.GOLD))
-                .append(Text.literal(String.format("%s/%s", Util.formatTime(currentTime), Util.formatTime(totalTime))).formatted(Formatting.DARK_AQUA));
+        val songText = Text.empty()
+            .append(Text.literal("Now playing: ").formatted(Formatting.GOLD))
+            .append(Text.literal(currentSong.name).formatted(Formatting.BLUE))
+            .append(Text.literal(" | ").formatted(Formatting.GOLD))
+            .append(
+                Text.literal(String.format("%s/%s", formatTime(currentTime), formatTime(totalTime))).formatted(
+                    Formatting.DARK_AQUA
+                )
+            )
 
         if (currentSong.looping) {
             if (currentSong.loopCount > 0) {
-                songText.append(Text.literal(String.format(" | Loop (%d/%d)", currentSong.currentLoop, currentSong.loopCount)).formatted(Formatting.GOLD));
+                songText.append(
+                    Text.literal(String.format(" | Loop (%d/%d)", currentSong.currentLoop, currentSong.loopCount))
+                        .formatted(
+                            Formatting.GOLD
+                        )
+                )
             } else {
-                songText.append(Text.literal(" | Looping enabled").formatted(Formatting.GOLD));
+                songText.append(Text.literal(" | Looping enabled").formatted(Formatting.GOLD))
             }
         }
 
-        ProgressDisplay.instance.setText(songText, handler.getGameMode() != GameMode.SURVIVAL ? Text.literal("Waiting for survival mode").formatted(Formatting.RED) : Text.empty());
+        setText(songText, if (handler.gameMode != GameMode.SURVIVAL) Text.literal("Waiting for survival mode").formatted(Formatting.RED) else Text.empty())
     }
 }

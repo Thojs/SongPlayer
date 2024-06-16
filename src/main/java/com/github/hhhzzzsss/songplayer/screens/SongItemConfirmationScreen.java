@@ -12,7 +12,6 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.screen.ScreenTexts;
 import net.minecraft.text.Text;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,7 +25,7 @@ public class SongItemConfirmationScreen extends Screen {
     private static final Text CONFIRM = Text.literal("Play");
     private static final Text CANCEL = ScreenTexts.CANCEL;
 
-    public SongItemConfirmationScreen(ItemStack stack) throws IOException, IllegalArgumentException {
+    public SongItemConfirmationScreen(ItemStack stack) throws IllegalArgumentException {
         super(Text.literal("Use song item"));
         this.loaderThread = new SongItemLoaderThread(stack);
         this.loaderThread.start();
@@ -59,7 +58,7 @@ public class SongItemConfirmationScreen extends Screen {
 
     @Override
     public void render(DrawContext context, int mouseX, int mouseY, float delta) {
-        this.renderBackground(context, mouseX, mouseY, delta);
+        super.render(context, mouseX, mouseY, delta);
 
         context.drawCenteredTextWithShadow(textRenderer, this.title, this.width / 2, 60, 0xFFFFFF);
 
@@ -74,7 +73,7 @@ public class SongItemConfirmationScreen extends Screen {
                 String[] loadedMessages = {
                         "§3" + loaderThread.song.name,
                         "",
-                        String.format("§7Size: %s", Util.humanReadableByteCountSI(loaderThread.songData.length)),
+                        String.format("§7Size: %s", Util.humanReadableByteCountSI(loaderThread.data.getSongData().length)),
                         String.format("§7Max notes per second: %s%d", getNumberColor(loaderThread.maxNotesPerSecond), loaderThread.maxNotesPerSecond),
                         String.format("§7Avg notes per second: %s%.2f", getNumberColor(loaderThread.avgNotesPerSecond), loaderThread.avgNotesPerSecond),
                 };
@@ -93,11 +92,9 @@ public class SongItemConfirmationScreen extends Screen {
         } else {
             unloadedText.drawCenterWithShadow(context, this.width / 2, 80);
         }
-
-        super.render(context, mouseX, mouseY, delta);
     }
 
-    public String getNumberColor(double number) {
+    private String getNumberColor(double number) {
         if (number < 50) {
             return "§a";
         } else if (number < 100) {

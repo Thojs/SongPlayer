@@ -1,62 +1,70 @@
-package com.github.hhhzzzsss.songplayer.item;
+package com.github.hhhzzzsss.songplayer.item
 
-import com.github.hhhzzzsss.songplayer.utils.Util;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Style;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
+import com.github.hhhzzzsss.songplayer.utils.Util.getStyledText
+import com.github.hhhzzzsss.songplayer.utils.Util.setItemLore
+import com.github.hhhzzzsss.songplayer.utils.Util.setItemName
+import net.minecraft.component.DataComponentTypes
+import net.minecraft.component.type.NbtComponent
+import net.minecraft.item.ItemStack
+import net.minecraft.nbt.NbtElement
+import net.minecraft.text.Style
+import net.minecraft.util.Formatting
 
-import java.util.Base64;
+object SongItemUtils {
+    private const val SONG_ITEM_KEY = "SongItemData"
 
-public class SongItemUtils {
-    private static final String SONG_ITEM_KEY = "SongItemData";
-    private static final String SONG_DATA_KEY = "SongData";
-    private static final String FILE_NAME_KEY = "FileName";
-    public static final String DISPLAY_NAME_KEY = "DisplayName";
+    @JvmStatic
+    fun createSongItem(stack: ItemStack, songData: ByteArray, filename: String, displayName: String): ItemStack {
+        val data = SongItemData(displayName, filename, songData)
 
-    public static ItemStack createSongItem(ItemStack stack, byte[] songData, String filename, String displayName) {
-        NbtCompound songPlayerNbt = new NbtCompound();
-        stack.setSubNbt(SONG_ITEM_KEY, songPlayerNbt);
-        songPlayerNbt.putString(SONG_DATA_KEY, Base64.getEncoder().encodeToString(songData));
-        songPlayerNbt.putString(FILE_NAME_KEY, filename);
-        songPlayerNbt.putString(DISPLAY_NAME_KEY, displayName);
-        addSongItemDisplay(stack);
-        return stack;
+        setData(stack, data)
+        setItemDisplayData(stack)
+
+        return stack
     }
 
-    public static void addSongItemDisplay(ItemStack stack) {
-        if (!isSongItem(stack)) return;
+    @JvmStatic
+    fun getData(stack: ItemStack): SongItemData? {
+        val nbt = stack.getOrDefault(DataComponentTypes.CUSTOM_DATA, NbtComponent.DEFAULT).copyNbt()
 
-        NbtCompound songPlayerNbt = getSongItemTag(stack);
-        String name = songPlayerNbt.getString(DISPLAY_NAME_KEY);
-        if (name == null || name.isEmpty()) name = songPlayerNbt.getString(FILE_NAME_KEY);
-        if (name == null || name.isEmpty()) name = "unnamed";
-        Text nameText = Util.getStyledText(name, Style.EMPTY.withColor(Formatting.DARK_AQUA).withItalic(false));
-        Util.setItemName(stack, nameText);
-        Util.setItemLore(stack,
-                Util.getStyledText("Song Item", Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)),
-                Util.getStyledText("Right click to play", Style.EMPTY.withColor(Formatting.AQUA).withItalic(false)),
-                Util.getStyledText("Requires SongPlayer 3.0+", Style.EMPTY.withColor(Formatting.GOLD).withItalic(false)),
-                Util.getStyledText("https://github.com/hhhzzzsss/SongPlayer", Style.EMPTY.withColor(Formatting.GRAY).withItalic(false))
-        );
-    }
-
-    public static NbtCompound getSongItemTag(ItemStack stack) {
-        return stack.getSubNbt(SONG_ITEM_KEY);
-    }
-
-    public static boolean isSongItem(ItemStack stack) {
-        return getSongItemTag(stack) != null;
-    }
-
-    public static byte[] getSongData(ItemStack stack) throws IllegalArgumentException {
-        NbtCompound songPlayerNbt = getSongItemTag(stack);
-        if (songPlayerNbt == null || !songPlayerNbt.contains(SONG_DATA_KEY, NbtElement.STRING_TYPE)) {
-            return null;
-        } else {
-            return Base64.getDecoder().decode(songPlayerNbt.getString(SONG_DATA_KEY));
+        if (!nbt.contains(SONG_ITEM_KEY, NbtElement.COMPOUND_TYPE.toInt())) {
+            return null
         }
+
+        return SongItemData.fromNbt(nbt.getCompound(SONG_ITEM_KEY))
+    }
+
+    @JvmStatic
+    fun setData(stack: ItemStack, data: SongItemData) {
+        NbtComponent.set(DataComponentTypes.CUSTOM_DATA, stack) { nbt ->
+            nbt.put(SONG_ITEM_KEY, data.toNbt())
+        }
+    }
+
+    @JvmStatic
+    fun setItemDisplayData(stack: ItemStack) {
+        val data = getData(stack) ?: return
+
+        var name = data.displayName
+        if (name.isEmpty()) name = data.fileName
+        if (name.isEmpty()) name = "unnamed"
+
+        val nameText = getStyledText(name, Style.EMPTY.withColor(Formatting.DARK_AQUA).withItalic(false))
+
+        setItemName(stack, nameText)
+        setItemLore(stack,
+            getStyledText("Song Item", Style.EMPTY.withColor(Formatting.YELLOW).withItalic(false)),
+            getStyledText("Right click to play", Style.EMPTY.withColor(Formatting.AQUA).withItalic(false)),
+            getStyledText("Requires SongPlayer 3.0+", Style.EMPTY.withColor(Formatting.GOLD).withItalic(false)),
+            getStyledText(
+                "https://github.com/hhhzzzsss/SongPlayer",
+                Style.EMPTY.withColor(Formatting.GRAY).withItalic(false)
+            )
+        )
+    }
+
+    @JvmStatic
+    fun isSongItem(stack: ItemStack): Boolean {
+        return getData(stack) != null
     }
 }

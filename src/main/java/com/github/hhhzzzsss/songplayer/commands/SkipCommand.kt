@@ -1,33 +1,24 @@
-package com.github.hhhzzzsss.songplayer.commands;
+package com.github.hhhzzzsss.songplayer.commands
 
-import com.github.hhhzzzsss.songplayer.SongPlayer;
-import com.github.hhhzzzsss.songplayer.playing.SongHandler;
-import com.mojang.brigadier.builder.LiteralArgumentBuilder;
-import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource;
+import com.github.hhhzzzsss.songplayer.SongPlayer
+import com.github.hhhzzzsss.songplayer.playing.SongHandler
+import com.mojang.brigadier.builder.LiteralArgumentBuilder
+import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
-class SkipCommand extends Command {
-    @Override
-    public String getName() {
-        return "skip";
-    }
+internal class SkipCommand : Command {
+    override val name = "skip"
 
-    @Override
-    public String getDescription() {
-        return "Skips current song";
-    }
+    override val description = "Skips current song"
 
-    @Override
-    public void buildNode(LiteralArgumentBuilder<FabricClientCommandSource> node) {
-        node.executes(context -> {
-            if (SongHandler.instance.getSongQueue().isEmpty()) {
-                SongPlayer.addChatMessage("§6No song is currently playing");
-                return 1;
+    override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
+        node.executes {
+            if (SongHandler.instance.songQueue.isEmpty) {
+                SongPlayer.addChatMessage("§6No song is currently playing")
+                return@executes 1
             }
-
-            SongPlayer.addChatMessage("§6Skipped the current song.");
-            SongHandler.instance.getSongQueue().next();
-
-            return 1;
-        });
+            SongPlayer.addChatMessage("§6Skipped the current song.")
+            SongHandler.instance.songQueue.next()
+            1
+        }
     }
 }

@@ -1,14 +1,14 @@
-package com.github.hhhzzzsss.songplayer.conversion;
+package com.github.hhhzzzsss.songplayer.io;
 
 import com.github.hhhzzzsss.songplayer.song.Instrument;
 import com.github.hhhzzzsss.songplayer.song.Note;
 import com.github.hhhzzzsss.songplayer.song.Song;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 public class NBSParser implements SongParser {
@@ -135,7 +135,7 @@ public class NBSParser implements SongParser {
 
             ArrayList<NBSLayer> nbsLayers = new ArrayList<>();
             if (buffer.hasRemaining()) {
-                for (int i=0; i<layerCount; i++) {
+                for (int i = 0; i < layerCount; i++) {
                     NBSLayer layer = new NBSLayer();
                     layer.name = getString(buffer, bytes.length);
                     if (format >= 4) {
@@ -159,8 +159,7 @@ public class NBSParser implements SongParser {
                 Instrument instrument;
                 if (note.instrument < instrumentIndex.length) {
                     instrument = instrumentIndex[note.instrument];
-                }
-                else {
+                } else {
                     continue;
                 }
 
@@ -173,12 +172,12 @@ public class NBSParser implements SongParser {
                     layerVolume = nbsLayers.get(note.layer).volume;
                 }
 
-                int pitch = note.key-33;
-                int noteId = pitch + instrument.instrumentId*25;
+                int pitch = note.key - 33;
+                int noteId = pitch + instrument.instrumentId * 25;
                 song.add(new Note(noteId, getMilliTime(note.tick, tempo)));
             }
 
-            song.length = song.get(song.size()-1).time + 50;
+            song.length = song.get(song.size() - 1).time + 50;
 
             return song;
         } catch (IOException e) {
@@ -186,13 +185,14 @@ public class NBSParser implements SongParser {
         }
     }
 
+    @Nullable
     @Override
-    public Collection<String> getMIMETypes() {
+    public List<String> getMimeTypes() {
         return null;
     }
 
     @Override
-    public Collection<String> getFileExtensions() {
+    public List<String> getFileExtensions() {
         return List.of("nbs");
     }
 }
