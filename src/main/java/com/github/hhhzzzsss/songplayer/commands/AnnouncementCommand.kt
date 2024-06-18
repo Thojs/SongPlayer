@@ -9,7 +9,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class AnnouncementCommand : Command {
     override val name = "announcement"
-
     override val description: String = "Set an announcement message that is sent when you start playing a song. With setMessage, write [name] where the song name should go."
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

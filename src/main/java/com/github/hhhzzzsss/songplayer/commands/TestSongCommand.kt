@@ -8,7 +8,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class TestSongCommand : Command {
     override val name = "testSong"
-
     override val description = "Creates a song for testing"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

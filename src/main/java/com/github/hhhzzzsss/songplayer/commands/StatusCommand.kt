@@ -9,7 +9,6 @@ import kotlin.math.min
 
 internal class StatusCommand : Command {
     override val name = "status"
-
     override val description = "Gets the status of the song that is currently playing"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

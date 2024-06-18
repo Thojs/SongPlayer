@@ -12,7 +12,6 @@ import java.io.IOException
 
 internal class PlayCommand : Command {
     override val name = "play"
-
     override val description = "Plays a song"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

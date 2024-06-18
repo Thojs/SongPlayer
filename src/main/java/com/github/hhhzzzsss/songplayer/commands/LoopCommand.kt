@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class LoopCommand : Command {
     override val name = "loop"
-
     override val description = "Toggles song looping"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

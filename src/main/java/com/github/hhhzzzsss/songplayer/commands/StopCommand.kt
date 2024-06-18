@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class StopCommand : Command {
     override val name = "stop"
-
     override val description = "Stops playing"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

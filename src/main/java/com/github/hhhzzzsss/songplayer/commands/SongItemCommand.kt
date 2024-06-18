@@ -16,7 +16,6 @@ import java.io.IOException
 
 internal class SongItemCommand : Command {
     override val name = "item"
-
     override val description = "Assigns/edits song data for the item in your hand"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

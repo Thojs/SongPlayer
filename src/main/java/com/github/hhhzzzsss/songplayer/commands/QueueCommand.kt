@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class QueueCommand : Command {
     override val name = "queue"
-
     override val description = "Shows the current song queue"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {

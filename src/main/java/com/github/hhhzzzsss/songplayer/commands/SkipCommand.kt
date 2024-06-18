@@ -7,7 +7,6 @@ import net.fabricmc.fabric.api.client.command.v2.FabricClientCommandSource
 
 internal class SkipCommand : Command {
     override val name = "skip"
-
     override val description = "Skips current song"
 
     override fun buildNode(node: LiteralArgumentBuilder<FabricClientCommandSource>) {
