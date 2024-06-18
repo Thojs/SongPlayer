@@ -3,8 +3,7 @@ package com.github.hhhzzzsss.songplayer.io
 import com.github.hhhzzzsss.songplayer.song.Instrument
 
 object MidiMappings {
-    @JvmStatic
-    val instrumentMap: HashMap<Int, List<Instrument>> = HashMap()
+    private val instrumentMap: HashMap<Int, List<Instrument>> = HashMap()
 
     init {
         // Piano (HARP BASS BELL)
@@ -158,8 +157,26 @@ object MidiMappings {
         instrumentMap[119] = listOf(Instrument.IRON_XYLOPHONE, Instrument.BASS, Instrument.XYLOPHONE)
     }
 
-    @JvmStatic
-    val percussionMap: java.util.HashMap<Int, Int> = java.util.HashMap()
+    fun getInstrumentNoteId(midiInstrument: Int, midiPitch: Int): Int? {
+        val instrumentList = instrumentMap[midiInstrument] ?: return null
+        var instrument: Instrument? = null
+
+        for (candidateInstrument in instrumentList) {
+            if (midiPitch >= candidateInstrument.midiOffset && midiPitch <= candidateInstrument.midiOffset + 24) {
+                instrument = candidateInstrument
+                break
+            }
+        }
+
+        if (instrument == null) return null
+
+        val pitch = midiPitch - instrument.midiOffset
+        val noteId = pitch + instrument.instrumentId * 25
+
+        return noteId
+    }
+
+    private val percussionMap: java.util.HashMap<Int, Int> = java.util.HashMap()
 
     init {
         percussionMap[35] = 10 + 25 * Instrument.BASEDRUM.instrumentId
@@ -215,5 +232,9 @@ object MidiMappings {
         percussionMap[85] = 21 + 25 * Instrument.HAT.instrumentId
         percussionMap[86] = 14 + 25 * Instrument.BASEDRUM.instrumentId
         percussionMap[87] = 7 + 25 * Instrument.BASEDRUM.instrumentId
+    }
+
+    fun getPercussionNoteId(midiPitch: Int): Int? {
+        return percussionMap[midiPitch]
     }
 }

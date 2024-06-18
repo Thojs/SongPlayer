@@ -1,8 +1,9 @@
 package com.github.hhhzzzsss.songplayer.stage
 
-class StageTypeRegistry private constructor() {
+object StageTypeRegistry {
     private val types = HashMap<String, StageType>()
 
+    @JvmStatic
     fun registerStageTypes(vararg types: StageType) {
         for (type in types) {
             if (type.identifier.contains(" ")) continue  // Spaces are not allowed.
@@ -11,15 +12,11 @@ class StageTypeRegistry private constructor() {
         }
     }
 
+    @JvmStatic
     fun getType(identifier: String): StageType? {
         return types[identifier]
     }
 
     val identifiers: List<String>
         get() = types.keys.toList()
-
-    companion object {
-        @JvmField
-        val instance: StageTypeRegistry = StageTypeRegistry()
-    }
 }

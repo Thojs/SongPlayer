@@ -17,6 +17,8 @@ class SongItemLoaderThread(private val stack: ItemStack) : SongLoaderThread() {
         try {
             data = getData(stack)
             song = data!!.song
+
+            val song = song ?: return
             song.sort()
 
             var j = 0

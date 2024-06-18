@@ -1,156 +1,125 @@
-package com.github.hhhzzzsss.songplayer.io;
+package com.github.hhhzzzsss.songplayer.io
 
-import com.github.hhhzzzsss.songplayer.song.Instrument;
-import com.github.hhhzzzsss.songplayer.song.Note;
-import com.github.hhhzzzsss.songplayer.song.Song;
-import org.jetbrains.annotations.NotNull;
+import com.github.hhhzzzsss.songplayer.io.MidiMappings.getInstrumentNoteId
+import com.github.hhhzzzsss.songplayer.io.MidiMappings.getPercussionNoteId
+import com.github.hhhzzzsss.songplayer.song.Note
+import com.github.hhhzzzsss.songplayer.song.Song
+import java.io.ByteArrayInputStream
+import java.io.IOException
+import javax.sound.midi.*
 
-import javax.sound.midi.*;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.util.*;
-
-import static com.github.hhhzzzsss.songplayer.io.MidiMappings.getInstrumentMap;
-import static com.github.hhhzzzsss.songplayer.io.MidiMappings.getPercussionMap;
-
-public class MidiParser implements SongParser {
-	public static final int SET_INSTRUMENT = 0xC0;
-	public static final int SET_TEMPO = 0x51;
-	public static final int NOTE_ON = 0x90;
-    public static final int NOTE_OFF = 0x80;
-
-	@Override
-	public Song parse(byte @NotNull [] bytes, @NotNull String name) {
-        try {
-			return getSong(MidiSystem.getSequence(new ByteArrayInputStream(bytes)), name);
-        } catch (InvalidMidiDataException | IOException e) {
-            return null;
+class MidiParser : SongParser {
+    override fun parse(bytes: ByteArray, title: String): Song? {
+        return try {
+            getSong(MidiSystem.getSequence(ByteArrayInputStream(bytes)), title)
+        } catch (e: InvalidMidiDataException) {
+            null
+        } catch (e: IOException) {
+            null
         }
-	}
-    
-	public static Song getSong(Sequence sequence, String name) {
-		Song song  = new Song(name);
-		
-		long tpq = sequence.getResolution();
-		
-		ArrayList<MidiEvent> tempoEvents = new ArrayList<>();
-		for (Track track : sequence.getTracks()) {
-			for (int i = 0; i < track.size(); i++) {
-				MidiEvent event = track.get(i);
-				MidiMessage message = event.getMessage();
-				if (message instanceof MetaMessage mm && mm.getType() == SET_TEMPO) {
-					tempoEvents.add(event);
-				}
-			}
-		}
-		
-		tempoEvents.sort(Comparator.comparingLong(MidiEvent::getTick));
-		
-		for (Track track : sequence.getTracks()) {
-			long microTime = 0;
-			int[] instrumentIds = new int[16];
-			int mpq = 500000;
-			int tempoEventIdx = 0;
-			long prevTick = 0;
-			
-			for (int i = 0; i < track.size(); i++) {
-				MidiEvent event = track.get(i);
-				MidiMessage message = event.getMessage();
-				
-				while (tempoEventIdx < tempoEvents.size() && event.getTick() > tempoEvents.get(tempoEventIdx).getTick()) {
-					long deltaTick = tempoEvents.get(tempoEventIdx).getTick() - prevTick;
-					prevTick = tempoEvents.get(tempoEventIdx).getTick();
-					microTime += (mpq/tpq) * deltaTick;
-					
-					MetaMessage mm = (MetaMessage) tempoEvents.get(tempoEventIdx).getMessage();
-					byte[] data = mm.getData();
-					int new_mpq = (data[2]&0xFF) | ((data[1]&0xFF)<<8) | ((data[0]&0xFF)<<16);
-					if (new_mpq != 0) mpq = new_mpq;
-					tempoEventIdx++;
-				}
-				
-				if (message instanceof ShortMessage sm) {
-                    if (sm.getCommand() == SET_INSTRUMENT) {
-						instrumentIds[sm.getChannel()] = sm.getData1();
-					} else if (sm.getCommand() == NOTE_ON) {
-						if (sm.getData2() == 0) continue;
-						int pitch = sm.getData1();
-						long deltaTick = event.getTick() - prevTick;
-						prevTick = event.getTick();
-						microTime += (mpq/tpq) * deltaTick;
+    }
 
-						Note note;
-						if (sm.getChannel() == 9) {
-							note = getMidiPercussionNote(pitch, microTime);
-						} else {
-							note = getMidiInstrumentNote(instrumentIds[sm.getChannel()], pitch, microTime);
-						}
+    override val fileExtensions = listOf("mid", "midi")
+    override val mimeTypes = listOf("audio/midi", "audio/x-midi")
 
-						if (note != null) song.add(note);
+    companion object {
+        private const val SET_TEMPO = 0x51
 
-						long time = microTime / 1000L;
-						if (time > song.length) {
-							song.length = time;
-						}
-					} else if (sm.getCommand() == NOTE_OFF) {
-						long deltaTick = event.getTick() - prevTick;
-						prevTick = event.getTick();
-						microTime += (mpq/tpq) * deltaTick;
-						long time = microTime / 1000L;
-						if (time > song.length) {
-							song.length = time;
-						}
-					}
-				}
-			}
-		}
+        fun getSong(sequence: Sequence, name: String): Song {
+            val song = Song(name)
 
-		song.sort();
-		
-		return song;
-	}
+            val tpq = sequence.resolution.toLong()
 
-	public static Note getMidiInstrumentNote(int midiInstrument, int midiPitch, long microTime) {
-		Instrument instrument = null;
-		List<Instrument> instrumentList = getInstrumentMap().get(midiInstrument);
-		if (instrumentList != null) {
-			for (Instrument candidateInstrument : instrumentList) {
-				if (midiPitch >= candidateInstrument.midiOffset && midiPitch <= candidateInstrument.midiOffset +24) {
-					instrument = candidateInstrument;
-					break;
-				}
-			}
-		}
+            // Tempo
+            val tempoEvents = arrayListOf<MidiEvent>()
+            for (track in sequence.tracks) {
+                for (i in 0 until track.size()) {
+                    val event = track[i]
+                    val message = event.message
+                    if (message is MetaMessage && message.type == SET_TEMPO) {
+                        tempoEvents.add(event)
+                    }
+                }
+            }
 
-		if (instrument == null) {
-			return null;
-		}
+            tempoEvents.sortWith(Comparator.comparingLong { obj: MidiEvent -> obj.tick })
 
-		int pitch = midiPitch-instrument.midiOffset;
-		int noteId = pitch + instrument.instrumentId*25;
-		long time = microTime / 1000L;
+            // Notes
+            for (track in sequence.tracks) {
+                var microTime: Long = 0
+                val instrumentIds = IntArray(16)
+                var mpq = 500000
+                var tempoEventIdx = 0
+                var prevTick: Long = 0
 
-		return new Note(noteId, time);
-	}
+                for (i in 0 until track.size()) {
+                    val event = track[i]
+                    val message = event.message
 
-	private static Note getMidiPercussionNote(int midiPitch, long microTime) {
-		if (getPercussionMap().containsKey(midiPitch)) {
-			int noteId = getPercussionMap().get(midiPitch);
-			long time = microTime / 1000L;
+                    while (tempoEventIdx < tempoEvents.size && event.tick > tempoEvents[tempoEventIdx].tick) {
+                        val deltaTick = tempoEvents[tempoEventIdx].tick - prevTick
+                        prevTick = tempoEvents[tempoEventIdx].tick
+                        microTime += (mpq / tpq) * deltaTick
 
-			return new Note(noteId, time);
-		}
-		return null;
-	}
+                        val mm = tempoEvents[tempoEventIdx].message as MetaMessage
+                        val data = mm.data
+                        val new_mpq = (data[2].toInt() and 0xFF) or ((data[1].toInt() and 0xFF) shl 8) or ((data[0].toInt() and 0xFF) shl 16)
+                        if (new_mpq != 0) mpq = new_mpq
+                        tempoEventIdx++
+                    }
 
-	@Override
-	public List<String> getFileExtensions() {
-		return List.of("mid", "midi");
-	}
+                    if (message !is ShortMessage) continue
 
-	@NotNull
-	@Override
-	public List<String> getMimeTypes() {
-		return List.of("audio/midi", "audio/x-midi");
-	}
+                    when (message.command) {
+                        ShortMessage.PROGRAM_CHANGE -> {
+                            instrumentIds[message.channel] = message.data1
+                        }
+                        ShortMessage.NOTE_ON -> {
+                            if (message.data2 == 0) continue
+                            val pitch: Int = message.data1
+                            val deltaTick = event.tick - prevTick
+                            prevTick = event.tick
+                            microTime += (mpq / tpq) * deltaTick
+                            val note = if (message.channel == 9) {
+                                getMidiPercussionNote(pitch, microTime)
+                            } else {
+                                getMidiInstrumentNote(instrumentIds[message.channel], pitch, microTime)
+                            }
+
+                            if (note != null) song.add(note)
+
+                            val time = microTime / 1000L
+                            if (time > song.length) {
+                                song.length = time
+                            }
+                        }
+                        ShortMessage.NOTE_OFF -> {
+                            val deltaTick = event.tick - prevTick
+                            prevTick = event.tick
+                            microTime += (mpq / tpq) * deltaTick
+                            val time = microTime / 1000L
+                            if (time > song.length) song.length = time
+                        }
+                    }
+                }
+            }
+
+            song.sort()
+            return song
+        }
+
+        fun getMidiInstrumentNote(midiInstrument: Int, midiPitch: Int, microTime: Long): Note? {
+            val noteId = getInstrumentNoteId(midiInstrument, midiPitch) ?: return null
+            val time = microTime / 1000L
+
+            return Note(noteId, time)
+        }
+
+        private fun getMidiPercussionNote(midiPitch: Int, microTime: Long): Note? {
+            val noteId = getPercussionNoteId(midiPitch) ?: return null
+            val time = microTime / 1000L
+
+            return Note(noteId, time)
+        }
+    }
 }

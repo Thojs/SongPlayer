@@ -2,10 +2,7 @@ package com.github.hhhzzzsss.songplayer;
 
 import com.github.hhhzzzsss.songplayer.commands.SongPlayerCommand;
 import com.github.hhhzzzsss.songplayer.commands.TimestampArgumentType;
-import com.github.hhhzzzsss.songplayer.io.SongParserRegistry;
-import com.github.hhhzzzsss.songplayer.io.MidiParser;
-import com.github.hhhzzzsss.songplayer.io.NBSParser;
-import com.github.hhhzzzsss.songplayer.io.SPParser;
+import com.github.hhhzzzsss.songplayer.io.*;
 import com.github.hhhzzzsss.songplayer.item.SongItemUtils;
 import com.github.hhhzzzsss.songplayer.stage.*;
 import com.github.hhhzzzsss.songplayer.utils.Util;
@@ -38,7 +35,7 @@ public class SongPlayer implements ModInitializer {
 		ModelPredicateProviderRegistry.register(Items.PAPER, new Identifier("song_item"), (itemStack, clientWorld, livingEntity, seed) -> SongItemUtils.isSongItem(itemStack) ? 1F : 0F);
 
 		// Register StageTypes
-		StageTypeRegistry.instance.registerStageTypes(
+		StageTypeRegistry.registerStageTypes(
 				new JavaSphericalStage(),
 				new DefaultStage(),
 				new WideStage()

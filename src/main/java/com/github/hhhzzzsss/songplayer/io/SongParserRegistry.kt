@@ -1,10 +1,10 @@
 package com.github.hhhzzzsss.songplayer.io
 
 object SongParserRegistry {
-    private val parsers: MutableList<SongParser> = ArrayList()
-    private val supportedFileExtensions: MutableList<String> = ArrayList()
-    private var sortedMIMEParserList: List<SongParser> = ArrayList()
-    private var sortedFileParserList: List<SongParser> = ArrayList()
+    private val parsers = mutableListOf<SongParser>()
+    private val supportedFileExtensions = mutableListOf<String>()
+    private var sortedMIMEParserList = listOf<SongParser>()
+    private var sortedFileParserList = listOf<SongParser>()
 
     fun registerParsers(vararg parsers: SongParser) {
         this.parsers.addAll(listOf(*parsers))

@@ -9,7 +9,7 @@ import net.minecraft.text.Text
 import net.minecraft.util.Hand
 import java.io.IOException
 
-class SongItemCreatorThread(location: String?) : SongLoaderThread(location) {
+class SongItemCreatorThread(location: String) : SongLoaderThread(location) {
     val slotId = SongPlayer.MC.player!!.inventory.selectedSlot
     val stack = SongPlayer.MC.player!!.inventory.getStack(slotId)
 
@@ -33,13 +33,13 @@ class SongItemCreatorThread(location: String?) : SongLoaderThread(location) {
 
             var newStack = if (stack.isEmpty) Items.PAPER.defaultStack else stack.copy()
 
-            newStack = createSongItem(newStack, songData, filename, song.name)
+            newStack = createSongItem(newStack, songData, filename!!, song!!.name)
             SongPlayer.MC.player!!.inventory.setStack(slotId, newStack)
             SongPlayer.MC.interactionManager!!.clickCreativeStack(
                 SongPlayer.MC.player!!.getStackInHand(Hand.MAIN_HAND),
                 36 + slotId
             )
-            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3" + song.name))
+            SongPlayer.addChatMessage(Text.literal("§6Successfully assigned song data to §3" + song!!.name))
         }
     }
 }
